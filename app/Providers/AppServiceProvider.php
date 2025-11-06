@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Item;
+use App\Models\ItemStock;
 use App\Observers\ItemObserver;
 use App\Models\FixedItemInstance;
+use App\Observers\ItemStockObserver;
 use App\Models\InstalledItemInstance;
 use Illuminate\Support\ServiceProvider;
 use App\Observers\FixedItemInstanceObserver;
@@ -28,5 +30,6 @@ class AppServiceProvider extends ServiceProvider
         Item::observe(ItemObserver::class);
         FixedItemInstance::observe(FixedItemInstanceObserver::class);
         InstalledItemInstance::observe(InstalledItemInstanceObserver::class);
+        ItemStock::observe(ItemStockObserver::class);
     }
 }

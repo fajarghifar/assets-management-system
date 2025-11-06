@@ -20,6 +20,7 @@ use Filament\Http\Middleware\AuthenticateSession;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use App\Filament\Resources\Locations\LocationResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Filament\Resources\ItemStocks\ItemStockResource;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -83,15 +84,20 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(1)
                     ->isActiveWhen(fn() => request()->routeIs(ItemResource::getRouteBaseName() . '*')),
+                NavigationItem::make('Daftar Stok Barang')
+                    ->url(fn(): string => ItemStockResource::getUrl('index'))
+                    ->group('Inventaris')
+                    ->sort(2)
+                    ->isActiveWhen(fn() => request()->routeIs(ItemStockResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Daftar Barang Tetap')
                     ->url(fn(): string => FixedItemInstanceResource::getUrl('index'))
                     ->group('Inventaris')
-                    ->sort(2)
+                    ->sort(3)
                     ->isActiveWhen(fn() => request()->routeIs(FixedItemInstanceResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Daftar Barang Terpasang')
                     ->url(fn(): string => InstalledItemInstanceResource::getUrl('index'))
                     ->group('Inventaris')
-                    ->sort(3)
+                    ->sort(4)
                     ->isActiveWhen(fn() => request()->routeIs(InstalledItemInstanceResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))

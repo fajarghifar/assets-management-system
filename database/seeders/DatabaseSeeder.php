@@ -27,6 +27,8 @@ class DatabaseSeeder extends Seeder
             LocationSeeder::class,
             ItemSeeder::class,
             FixedItemInstanceSeeder::class,
+            InstalledItemInstanceSeeder::class,
+            ItemStockSeeder::class
         ]);
     }
 }
