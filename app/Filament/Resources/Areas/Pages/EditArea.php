@@ -2,22 +2,20 @@
 
 namespace App\Filament\Resources\Areas\Pages;
 
-use Filament\Resources\Pages\ManageRecords;
 use App\Filament\Resources\Areas\AreaResource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
+use Filament\Resources\Pages\EditRecord;
 
-class ManageAreas extends ManageRecords
+class EditArea extends EditRecord
 {
     protected static string $resource = AreaResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
-            //
+            ViewAction::make(),
+            DeleteAction::make(),
         ];
-    }
-
-    public function getHeading(): string
-    {
-        return '';
     }
 }

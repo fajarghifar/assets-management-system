@@ -109,6 +109,7 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Lokasi')
                     ->sort(2)
                     ->isActiveWhen(fn() => request()->routeIs(LocationResource::getRouteBaseName() . '*')),
-            ]);
+            ])
+            ->breadcrumbs(false);
     }
 }
