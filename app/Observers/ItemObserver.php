@@ -10,7 +10,7 @@ class ItemObserver
     public function saving(Item $item)
     {
         if ($item->exists && $item->isDirty('type')) {
-            (new ItemManagementService())->validateTypeChange($item, $item->type);
+            throw new \LogicException('Mengubah tipe barang tidak diizinkan setelah item dibuat.');
         }
     }
 
