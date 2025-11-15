@@ -18,6 +18,7 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Filament\Http\Middleware\AuthenticateSession;
 use Illuminate\Routing\Middleware\SubstituteBindings;
+use App\Filament\Resources\Borrowings\BorrowingResource;
 use App\Filament\Resources\Locations\LocationResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Resources\ItemStocks\ItemStockResource;
@@ -70,6 +71,10 @@ class AdminPanelProvider extends PanelProvider
             // ->topNavigation()
             ->navigationGroups([
                 NavigationGroup::make()
+                    ->label('Peminjaman')
+                    ->icon('heroicon-o-inbox-arrow-down')
+                    ->collapsible(),
+                NavigationGroup::make()
                     ->label('Inventaris')
                     ->icon('heroicon-o-archive-box')
                     ->collapsible(),
@@ -79,26 +84,31 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(),
             ])
             ->navigationItems([
-                NavigationItem::make('Daftar Barang')
+                NavigationItem::make('Master Barang')
                     ->url(fn(): string => ItemResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(1)
                     ->isActiveWhen(fn() => request()->routeIs(ItemResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Daftar Stok Barang')
+                NavigationItem::make('Stok Barang Habis Pakai')
                     ->url(fn(): string => ItemStockResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(2)
                     ->isActiveWhen(fn() => request()->routeIs(ItemStockResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Daftar Barang Tetap')
+                NavigationItem::make('Instance Barang Tetap')
                     ->url(fn(): string => FixedItemInstanceResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(3)
                     ->isActiveWhen(fn() => request()->routeIs(FixedItemInstanceResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Daftar Barang Terpasang')
+                NavigationItem::make('Instance Barang Terpasang')
                     ->url(fn(): string => InstalledItemInstanceResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(4)
                     ->isActiveWhen(fn() => request()->routeIs(InstalledItemInstanceResource::getRouteBaseName() . '*')),
+                NavigationItem::make('Peminjaman')
+                    ->url(fn(): string => BorrowingResource::getUrl('index'))
+                    ->group('Peminjaman')
+                    ->sort(1)
+                    ->isActiveWhen(fn() => request()->routeIs(BorrowingResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Area')
                     ->url(fn(): string => AreaResource::getUrl('index'))
                     ->group('Lokasi')
