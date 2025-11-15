@@ -15,7 +15,7 @@ class FixedItemInstance extends Model
         'item_id',
         'serial_number',
         'status',
-        'current_location_id',
+        'location_id',
         'notes'
     ];
 
@@ -28,8 +28,8 @@ class FixedItemInstance extends Model
         return $this->belongsTo(Item::class)->withTrashed();
     }
 
-    public function currentLocation()
+    public function location()
     {
-        return $this->belongsTo(Location::class, 'current_location_id');
+        return $this->belongsTo(Location::class, 'location_id');
     }
 }

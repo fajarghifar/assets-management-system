@@ -17,7 +17,10 @@ return new class extends Migration
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
             $table->string('serial_number')->nullable()->unique();
             $table->enum('status', ['available', 'borrowed', 'maintenance'])->default('available');
-            $table->foreignId('current_location_id')->nullable()->constrained('locations')->nullOnDelete();
+            $table->foreignId('location_id')
+                ->nullable()
+                ->constrained('locations')
+                ->nullOnDelete();
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();

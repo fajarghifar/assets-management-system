@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\FixedItemInstances;
 
-use BackedEnum;
 use App\Models\Item;
 use App\Models\Location;
 use Filament\Tables\Table;
@@ -15,9 +14,9 @@ use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
-use Filament\Support\Icons\Heroicon;
 use Filament\Actions\BulkActionGroup;
 use Filament\Forms\Components\Select;
+use Filament\Support\Exceptions\Halt;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\RestoreBulkAction;
@@ -31,7 +30,6 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Services\FixedItemInstanceService;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\FixedItemInstances\Pages\ManageFixedItemInstances;
@@ -47,7 +45,7 @@ class FixedItemInstanceResource extends Resource
         return $schema
             ->components([
                 Select::make('item_id')
-                    ->label('Jenis Barang')
+                    ->label('Nama Barang')
                     ->relationship(
                         name: 'item',
                         titleAttribute: 'name',
@@ -77,10 +75,10 @@ class FixedItemInstanceResource extends Resource
                         'maintenance' => 'Perawatan',
                     ])
                     ->required(),
-                Select::make('current_location_id')
+                Select::make('location_id')
                     ->label('Lokasi Saat Ini')
                     ->relationship(
-                        name: 'currentLocation',
+                        name: 'location',
                         titleAttribute: 'name',
                         modifyQueryUsing: fn(Builder $query) => $query->orderBy('name')
                     )
@@ -99,7 +97,7 @@ class FixedItemInstanceResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Daftar Instance Barang Tetap')
+            ->heading('Daftar Barang Tetap')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('No.')
@@ -112,13 +110,13 @@ class FixedItemInstanceResource extends Resource
                     ->copyable()
                     ->weight('medium'),
                 TextColumn::make('item.name')
-                    ->label('Jenis Barang')
+                    ->label('Nama Barang')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable(),
-                TextColumn::make('currentLocation.name')
+                TextColumn::make('location.name')
                     ->label('Lokasi')
                     ->searchable()
                     ->sortable(),
@@ -138,7 +136,7 @@ class FixedItemInstanceResource extends Resource
                         default => $state,
                     }),
                 IconColumn::make('deleted_at')
-                    ->label('Status Hapus')
+                    ->label('Status Data')
                     ->state(fn($record) => !is_null($record->deleted_at))
                     ->boolean()
                     ->trueColor('danger')
@@ -152,7 +150,13 @@ class FixedItemInstanceResource extends Resource
             ])
             ->filters([
                 SelectFilter::make('item')
-                    ->relationship('item', 'name')
+                    ->relationship(
+                        name: 'item',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query) => $query
+                            ->where('type', 'fixed')
+                            ->orderBy('name')
+                    )
                     ->multiple(),
                 SelectFilter::make('status')
                     ->options([
@@ -177,18 +181,23 @@ class FixedItemInstanceResource extends Resource
                         ->modalDescription('Instance akan disembunyikan, tapi tetap ada di riwayat.')
                         ->action(function (FixedItemInstance $record) {
                             try {
-                                (new FixedItemInstanceService())->delete($record);
+                                app(FixedItemInstanceService::class)->delete($record);
+
                                 Notification::make()
-                                    ->title('Berhasil')
-                                    ->body("{$record->code} berhasil dihapus.")
+                                    ->title('Berhasil Dihapus')
+                                    ->body("Instance {$record->code} berhasil dihapus.")
                                     ->success()
                                     ->send();
+
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->title('Gagal Menghapus')
                                     ->body($e->getMessage())
                                     ->danger()
                                     ->send();
+
+                                // Hentikan aksi agar notifikasi sukses default tidak muncul
+                                throw new Halt();
                             }
                         }),
                     ForceDeleteAction::make()->iconSize('lg'),
@@ -201,28 +210,33 @@ class FixedItemInstanceResource extends Resource
                         ->action(function ($records) {
                             $deleted = 0;
                             $errors = [];
+                            $service = app(FixedItemInstanceService::class);
+
                             foreach ($records as $record) {
                                 try {
-                                    (new FixedItemInstanceService())->delete($record);
+                                    $service->delete($record);
                                     $deleted++;
                                 } catch (\Exception $e) {
                                     $errors[] = "{$record->code}: " . $e->getMessage();
                                 }
                             }
+
                             if ($deleted > 0) {
                                 Notification::make()
                                     ->title("Berhasil menghapus {$deleted} instance")
                                     ->success()
                                     ->send();
                             }
+
                             if (!empty($errors)) {
                                 Notification::make()
                                     ->title('Beberapa instance gagal dihapus')
-                                    ->body(implode('\n', $errors))
+                                    ->body(implode("\n", $errors))
                                     ->danger()
                                     ->send();
                             }
                         }),
+
                     ForceDeleteBulkAction::make(),
                     RestoreBulkAction::make(),
                 ]),
@@ -240,7 +254,7 @@ class FixedItemInstanceResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['item', 'currentLocation'])
+            ->with(['item', 'location'])
             ->withTrashed();
     }
 

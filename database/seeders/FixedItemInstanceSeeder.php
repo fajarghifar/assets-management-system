@@ -42,7 +42,7 @@ class FixedItemInstanceSeeder extends Seeder
             'item_id' => Item::where('code', 'TANG-CRIMP')->value('id'),
             'serial_number' => 'TC2023A001',
             'status' => 'available',
-            'current_location_id' => $jmp1Wh->id,
+            'location_id' => $jmp1Wh->id,
             'notes' => 'Masih dalam garansi',
         ]);
 
@@ -52,7 +52,7 @@ class FixedItemInstanceSeeder extends Seeder
             'item_id' => Item::where('code', 'MULTIMETER-DT')->value('id'),
             'serial_number' => 'DT2023M001',
             'status' => 'available',
-            'current_location_id' => $jmp1Wh->id,
+            'location_id' => $jmp1Wh->id,
             'notes' => 'Untuk pengukuran jaringan',
         ]);
 
