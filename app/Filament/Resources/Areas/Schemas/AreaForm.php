@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Areas\Schemas;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
+use App\Enums\AreaCategory;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
 
 class AreaForm
 {
@@ -13,29 +15,30 @@ class AreaForm
     {
         return $schema
             ->components([
-                TextInput::make('code')
-                    ->label('Kode Area')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(20)
-                    ->helperText('Contoh: PH-A, OFF-B, STORE-C')
-                    ->autofocus(),
-                TextInput::make('name')
-                    ->label('Nama Area')
-                    ->required()
-                    ->maxLength(100),
-                Select::make('category')
-                    ->label('Kategori')
-                    ->options([
-                        'housing' => 'Perumahan',
-                        'office' => 'Kantor',
-                        'store' => 'Store',
+                Section::make('Area Details')
+                    ->columns(2)
+                    ->schema([
+                        TextInput::make('code')
+                            ->label('Kode Area')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(20)
+                            ->helperText('Contoh: PH-A, OFF-B, STORE-C')
+                            ->columnSpanFull(),
+                        TextInput::make('name')
+                            ->label('Nama Area')
+                            ->required()
+                            ->maxLength(100),
+                        Select::make('category')
+                            ->label('Kategori')
+                            ->options(AreaCategory::class)
+                            ->required()
+                            ->native(true),
+                        Textarea::make('address')
+                            ->label('Alamat')
+                            ->rows(3)
+                            ->columnSpanFull(),
                     ])
-                    ->required()
-                    ->native(true),
-                Textarea::make('address')
-                    ->label('Alamat')
-                    ->rows(3)
                     ->columnSpanFull(),
             ]);
     }

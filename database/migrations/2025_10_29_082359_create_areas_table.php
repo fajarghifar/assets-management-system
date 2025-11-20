@@ -1,8 +1,9 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration
 {
@@ -15,10 +16,18 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
-            $table->enum('category', ['housing', 'office', 'store']);
+            $table->string('category');
             $table->text('address')->nullable();
             $table->timestamps();
+
+            // Indexes
+            $table->index('name');
+            $table->index('category');
         });
+
+        DB::statement(
+            'ALTER TABLE areas MODIFY code VARCHAR(50) COLLATE utf8mb4_unicode_ci UNIQUE'
+        );
     }
 
     /**

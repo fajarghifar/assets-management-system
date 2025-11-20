@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use App\Models\Location;
+use App\Enums\AreaCategory;
+use App\Observers\AreaObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy(AreaObserver::class)]
 class Area extends Model
 {
     use HasFactory;
@@ -18,7 +22,7 @@ class Area extends Model
     ];
 
     protected $casts = [
-        'category' => 'string',
+        'category' => AreaCategory::class,
     ];
 
     public function locations()

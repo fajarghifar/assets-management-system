@@ -14,6 +14,7 @@ use App\Filament\Resources\Areas\Pages\CreateArea;
 use App\Filament\Resources\Areas\Schemas\AreaForm;
 use App\Filament\Resources\Areas\Tables\AreasTable;
 use App\Filament\Resources\Areas\Schemas\AreaInfolist;
+use App\Filament\Resources\Areas\RelationManagers\LocationsRelationManager;
 
 class AreaResource extends Resource
 {
@@ -39,7 +40,7 @@ class AreaResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            LocationsRelationManager::class,
         ];
     }
 
