@@ -8,20 +8,17 @@ use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
-use App\Services\LocationService;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\Textarea;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Tables\Filters\TernaryFilter;
+use Illuminate\Validation\ValidationException;
 use App\Filament\Resources\Locations\Pages\ManageLocations;
 
 class LocationResource extends Resource
@@ -39,27 +36,23 @@ class LocationResource extends Resource
                     ->relationship('area','name')
                     ->searchable()
                     ->preload()
+                    ->required()
                     ->optionsLimit(10)
-                    ->required(),
+                    ->columnSpanFull(),
                 TextInput::make('code')
                     ->label('Kode Lokasi')
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(30)
-                    ->helperText('Contoh: JMP1-RM1, BT-EVT')
-                    ->autofocus(),
+                    ->disabledOn('edit')
+                    ->helperText('Contoh: JMP1-RM1, BT-EVT'),
                 TextInput::make('name')
                     ->label('Nama Lokasi')
                     ->required()
-                    ->maxLength(100),
-                Toggle::make('is_borrowable')
-                    ->label('Dapat Dipinjam?')
-                    ->default(false)
-                    ->onColor('success')
-                    ->offColor('gray')
-                    ->inline(false),
+                    ->maxLength(100)
+                    ->placeholder('Contoh: Ruang Meeting Utama'),
                 Textarea::make('description')
-                    ->label('Deskripsi')
+                    ->label('Deskripsi / Catatan')
                     ->rows(3)
                     ->columnSpanFull(),
             ]);
@@ -68,7 +61,7 @@ class LocationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-        ->heading('Daftar Lokasi')
+            ->heading('Daftar Lokasi')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('No.')
@@ -76,8 +69,8 @@ class LocationResource extends Resource
                     ->width('50px'),
                 TextColumn::make('code')
                     ->label('Kode')
+                    ->badge()
                     ->searchable()
-                    ->sortable()
                     ->copyable(),
                 TextColumn::make('name')
                     ->label('Nama Lokasi')
@@ -88,23 +81,11 @@ class LocationResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->badge()
-                    ->color(fn(Location $record) => match ($record->area?->category) {
-                        'housing' => 'info',
-                        'office' => 'success',
-                        'store' => 'warning',
-                        default => 'gray',
-                    }),
+                    ->color(fn(Location $record) => $record->area?->category?->getColor() ?? 'gray'),
                 TextColumn::make('description')
                     ->label('Deskripsi')
-                    ->limit(40),
-                IconColumn::make('is_borrowable')
-                    ->label('Dapat Dipinjam?')
-                    ->boolean()
-                    ->trueColor('success')
-                    ->falseColor('danger')
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle')
-                    ->tooltip(fn(Location $record) => $record->is_borrowable ? 'Ya' : 'Tidak'),
+                    ->limit(40)
+                    ->tooltip(fn(TextColumn $column) => $column->getState()),
             ])
             ->headerActions([
                 CreateAction::make()->label('Tambah Lokasi'),
@@ -112,12 +93,9 @@ class LocationResource extends Resource
             ->filters([
                 SelectFilter::make('area')
                     ->relationship('area', 'name')
-                    ->multiple(),
-
-                TernaryFilter::make('is_borrowable')
-                    ->label('Dapat Dipinjam?')
-                    ->trueLabel('Hanya yang bisa dipinjam')
-                    ->falseLabel('Hanya yang tidak bisa dipinjam'),
+                    ->searchable()
+                    ->preload()
+                    ->optionsLimit(10),
             ])
             ->recordActions([
                 ActionGroup::make([
@@ -126,22 +104,23 @@ class LocationResource extends Resource
                     DeleteAction::make()
                         ->action(function (Location $record) {
                             try {
-                                (new LocationService())->delete($record);
+                                $record->delete();
+                                Notification::make()->success()->title('Lokasi berhasil dihapus')->send();
+                            } catch (ValidationException $e) {
                                 Notification::make()
-                                    ->title('Berhasil')
-                                    ->body("Lokasi {$record->name} berhasil dihapus.")
-                                    ->success()
+                                    ->danger()
+                                    ->title('Gagal Menghapus')
+                                    ->body($e->validator->errors()->first())
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
-                                    ->title('Gagal Menghapus Lokasi')
-                                    ->body($e->getMessage())
                                     ->danger()
+                                    ->title('Error Sistem')
+                                    ->body($e->getMessage())
                                     ->send();
                             }
                         }),
-                ])
-                    ->dropdownPlacement('left-start'),
+                ])->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
                 //

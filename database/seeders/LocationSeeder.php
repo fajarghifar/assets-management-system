@@ -21,12 +21,10 @@ class LocationSeeder extends Seeder
         }
 
         // === LOKASI DI JMP 1 (KANTOR) ===
-        // Ruang yang BISA DIPINJAM
         Location::create([
             'code' => 'JMP1-RM1',
             'name' => 'Ruang Meeting 1',
             'area_id' => $jmp1->id,
-            'is_borrowable' => true,
             'description' => 'Ruang meeting kecil di lantai 1 untuk presentasi',
         ]);
 
@@ -34,16 +32,13 @@ class LocationSeeder extends Seeder
             'code' => 'JMP1-RM2',
             'name' => 'Ruang Meeting Besar',
             'area_id' => $jmp1->id,
-            'is_borrowable' => true,
             'description' => 'Ruang meeting utama dengan proyektor dan kapasitas 20 orang',
         ]);
 
-        // Ruang yang TIDAK BISA DIPINJAM
         Location::create([
             'code' => 'JMP1-SRV',
             'name' => 'Ruang Server',
             'area_id' => $jmp1->id,
-            'is_borrowable' => false,
             'description' => 'Akses terbatas, hanya untuk tim IT',
         ]);
 
@@ -51,7 +46,6 @@ class LocationSeeder extends Seeder
             'code' => 'JMP1-WH1',
             'name' => 'Gudang Barang Jadi 1',
             'area_id' => $jmp1->id,
-            'is_borrowable' => false,
             'description' => 'Penyimpanan produk jadi dan peralatan IT',
         ]);
 
@@ -60,7 +54,6 @@ class LocationSeeder extends Seeder
             'code' => 'JMP2-RM1',
             'name' => 'Ruang Rapat Produksi',
             'area_id' => $jmp2->id,
-            'is_borrowable' => true,
             'description' => 'Untuk koordinasi tim produksi batik',
         ]);
 
@@ -68,7 +61,6 @@ class LocationSeeder extends Seeder
             'code' => 'JMP2-LAB',
             'name' => 'Laboratorium Desain',
             'area_id' => $jmp2->id,
-            'is_borrowable' => false,
             'description' => 'Area eksklusif desainer batik',
         ]);
 
@@ -77,7 +69,6 @@ class LocationSeeder extends Seeder
             'code' => 'BT-SHOP1',
             'name' => 'Area Display Utama',
             'area_id' => $bt->id,
-            'is_borrowable' => false,
             'description' => 'Area pameran dan penjualan batik',
         ]);
 
@@ -85,7 +76,6 @@ class LocationSeeder extends Seeder
             'code' => 'BT-EVT',
             'name' => 'Ruang Event & Workshop',
             'area_id' => $bt->id,
-            'is_borrowable' => true,
             'description' => 'Untuk workshop batik atau acara khusus pelanggan',
         ]);
 
@@ -93,7 +83,6 @@ class LocationSeeder extends Seeder
             'code' => 'BT-WH',
             'name' => 'Gudang Retail',
             'area_id' => $bt->id,
-            'is_borrowable' => false,
             'description' => 'Stok barang retail dan perlengkapan toko',
         ]);
 

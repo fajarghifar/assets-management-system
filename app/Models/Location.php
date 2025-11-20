@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use App\Models\Area;
+use App\Observers\LocationObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
+#[ObservedBy(LocationObserver::class)]
 class Location extends Model
 {
     use HasFactory;
@@ -14,41 +19,31 @@ class Location extends Model
         'code',
         'name',
         'area_id',
-        'is_borrowable',
         'description',
     ];
 
-    protected $casts = [
-        'is_borrowable' => 'boolean',
-    ];
-
-    public function area()
+    public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
     }
 
-    // public function roomBookings()
-    // {
-    //     return $this->hasMany(RoomBooking::class);
-    // }
-
-    public function scopeBorrowable($query)
+    public function itemStocks(): HasMany
     {
-        return $query->where('is_borrowable', true);
+        return $this->hasMany(ItemStock::class);
     }
 
-    public function fixedItemInstances()
+    public function fixedItemInstances(): HasMany
     {
-        return $this->hasMany(FixedItemInstance::class, 'location_id');
+        return $this->hasMany(FixedItemInstance::class);
     }
 
-    public function installedItemInstances()
+    public function installedItemInstances(): HasMany
     {
-        return $this->hasMany(InstalledItemInstance::class, 'installed_location_id');
+        return $this->hasMany(InstalledItemInstance::class);
     }
 
-    public function itemStocks()
+    public function installedItemHistory(): HasMany
     {
-        return $this->hasMany(ItemStock::class, 'location_id');
+        return $this->hasMany(InstalledItemLocationHistory::class);
     }
 }

@@ -15,10 +15,15 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
-            $table->foreignId('area_id')->constrained()->cascadeOnDelete();
-            $table->boolean('is_borrowable')->default(false);
+            $table->foreignId('area_id')
+                ->constrained()
+                ->onDelete('restrict');
             $table->text('description')->nullable();
             $table->timestamps();
+
+            // Indexes
+            $table->index('name');
+            $table->index(['area_id', 'name']);
         });
     }
 
