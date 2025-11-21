@@ -111,7 +111,11 @@ class ItemStocksRelationManager extends RelationManager
                     ->sortable()
                     ->color(fn(int $state): string => $state > 0 ? 'info' : 'gray')
                     ->badge()
-                    ->alignCenter()
+                    ->alignCenter(),
+                TextColumn::make('updated_at')
+                    ->label('Terakhir Diupdate')
+                    ->dateTime()
+                    ->sortable(),
             ])
             ->headerActions([
                 CreateAction::make()

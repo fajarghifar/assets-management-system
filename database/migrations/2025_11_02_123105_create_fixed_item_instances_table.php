@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
             $table->string('serial_number')->nullable()->unique();
-            $table->enum('status', ['available', 'borrowed', 'maintenance'])->default('available');
+            $table->string('status')->default('available')->index();
             $table->foreignId('location_id')
                 ->nullable()
                 ->constrained('locations')
@@ -25,8 +25,8 @@ return new class extends Migration
             $table->softDeletes();
             $table->timestamps();
 
+            // Indexes
             $table->index('item_id');
-            $table->index('status');
         });
     }
 

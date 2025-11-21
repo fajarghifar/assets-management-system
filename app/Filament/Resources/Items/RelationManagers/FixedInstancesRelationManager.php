@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\FixedItemInstances;
+namespace App\Filament\Resources\Items\RelationManagers;
 
+use BackedEnum;
 use App\Models\Area;
 use App\Models\Item;
 use App\Enums\ItemType;
@@ -10,8 +11,6 @@ use Filament\Tables\Table;
 use Filament\Schemas\Schema;
 use App\Enums\FixedItemStatus;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Resources\Resource;
 use App\Models\FixedItemInstance;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
@@ -22,6 +21,7 @@ use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Filters\SelectFilter;
@@ -29,35 +29,31 @@ use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Schemas\Components\Utilities\Get;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\FixedItemInstances\Pages\ManageFixedItemInstances;
+use Filament\Resources\RelationManagers\RelationManager;
 
-class FixedItemInstanceResource extends Resource
+class FixedInstancesRelationManager extends RelationManager
 {
-    protected static ?string $model = FixedItemInstance::class;
+    protected static string $relationship = 'fixedInstances';
 
-    protected static bool $shouldRegisterNavigation = false;
+    protected static ?string $title = 'Unit Aset Tetap';
 
-    public static function form(Schema $schema): Schema
+    protected static string|BackedEnum|null $icon = 'heroicon-o-tag';
+
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
+    {
+        return $ownerRecord instanceof Item && $ownerRecord->type === ItemType::Fixed;
+    }
+
+    public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Select::make('item_id')
-                    ->label('Nama Barang')
-                    ->relationship(
-                        name: 'item',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn(Builder $query) => $query->where('type', ItemType::Fixed)
-                    )
-                    ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->code} - {$record->name}")
-                    ->searchable(['name', 'code'])
-                    ->preload()
-                    ->required(),
                 TextInput::make('code')
                     ->label('Kode Instance')
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(30),
+                    ->maxLength(30)
+                    ->columnSpanFull(),
                 TextInput::make('serial_number')
                     ->label('Nomor Seri')
                     ->maxLength(100)
@@ -65,7 +61,7 @@ class FixedItemInstanceResource extends Resource
                     ->nullable()
                     ->placeholder('Opsional'),
                 Select::make('status')
-                    ->label('Status')
+                    ->label('Status Kondisi')
                     ->options(FixedItemStatus::class)
                     ->default(FixedItemStatus::Available)
                     ->required()
@@ -76,21 +72,22 @@ class FixedItemInstanceResource extends Resource
                     ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
                     ->searchable(['name', 'code'])
                     ->preload()
-                    ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value),
+                    ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value)
+                    ->columnSpanFull(),
                 Textarea::make('notes')
-                    ->label('Catatan')
+                    ->label('Catatan Kondisi')
                     ->rows(3)
                     ->columnSpanFull(),
             ]);
     }
 
-    public static function table(Table $table): Table
+    public function table(Table $table): Table
     {
         return $table
-            ->heading('Daftar Barang Tetap')
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['location.area']))
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('No.')
+                    ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
                     ->label('Kode')
@@ -98,10 +95,6 @@ class FixedItemInstanceResource extends Resource
                     ->copyable()
                     ->badge()
                     ->color('primary'),
-                TextColumn::make('item.name')
-                    ->label('Nama Barang')
-                    ->searchable()
-                    ->sortable(),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable()
@@ -134,7 +127,10 @@ class FixedItemInstanceResource extends Resource
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Instance'),
+                CreateAction::make()
+                    ->label('Registrasi Unit Baru')
+                    ->modalWidth('lg')
+                    ->slideOver(),
             ])
             ->filters([
                 SelectFilter::make('area')
@@ -153,12 +149,6 @@ class FixedItemInstanceResource extends Resource
                     ->searchable()
                     ->preload()
                     ->optionsLimit(5),
-                SelectFilter::make('item_id')
-                    ->label('Nama Barang')
-                    ->options(fn() => Item::where('type', ItemType::Fixed)->pluck('name', 'id'))
-                    ->searchable()
-                    ->preload()
-                    ->optionsLimit(5),
                 SelectFilter::make('status')
                     ->options(FixedItemStatus::class),
                 TrashedFilter::make()
@@ -169,10 +159,11 @@ class FixedItemInstanceResource extends Resource
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make(),
-                    EditAction::make(),
+                    EditAction::make()
+                        ->modalWidth('lg')
+                        ->slideOver(),
                     DeleteAction::make()
-                        ->action(function (FixedItemInstance $record) {
+                        ->action(function (Model $record) {
                             try {
                                 $record->delete();
                                 Notification::make()->success()->title('Aset berhasil dihapus')->send();
@@ -189,30 +180,7 @@ class FixedItemInstanceResource extends Resource
                 ])->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
-                //
-            ])
-            ->striped();
-    }
 
-    public static function getPages(): array
-    {
-        return [
-            'index' => ManageFixedItemInstances::route('/'),
-        ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->with(['item', 'location.area'])
-            ->withTrashed();
-    }
-
-    public static function getRecordRouteBindingEloquentQuery(): Builder
-    {
-        return parent::getRecordRouteBindingEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
             ]);
     }
 }
