@@ -26,27 +26,23 @@ class InstalledItemInstancesTable
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('No.')
-                    ->rowIndex()
-                    ->width('50px'),
+                    ->rowIndex(),
                 TextColumn::make('code')
                     ->label('Kode Instance')
                     ->searchable()
                     ->sortable()
-                    ->copyable()
-                    ->weight('medium'),
+                    ->copyable()->weight('medium')->color('primary'),
                 TextColumn::make('item.name')
                     ->label('Jenis Barang')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('serial_number')
-                    ->label('Nomor Seri')
-                    ->searchable(),
+                    ->label('Nomor Seri')->searchable()->placeholder('-')->fontFamily('mono')->toggleable(),
                 TextColumn::make('currentLocation.area.name')
                     ->label('Area')
                     ->searchable()
                     ->sortable()
-                    ->badge()
-                    ->color(
+                    ->badge()->color(
                         fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
                     ),
                 TextColumn::make('currentLocation.name')

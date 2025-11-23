@@ -15,10 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name');
-            $table->enum('type', ['fixed', 'consumable', 'installed']);
+            $table->string('type');
             $table->text('description')->nullable();
             $table->softDeletes();
             $table->timestamps();
+
+            // Indexes
+            $table->index('name');
+            $table->index('type');
         });
     }
 

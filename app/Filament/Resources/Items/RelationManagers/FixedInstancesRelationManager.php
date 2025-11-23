@@ -92,28 +92,34 @@ class FixedInstancesRelationManager extends RelationManager
                 TextColumn::make('code')
                     ->label('Kode')
                     ->searchable()
+                    ->sortable()
                     ->copyable()
                     ->badge()
                     ->color('primary'),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable()
-                    ->copyable(),
+                    ->copyable()
+                    ->fontFamily('mono')
+                    ->placeholder('-'),
                 TextColumn::make('location.area.name')
                     ->label('Area')
                     ->sortable()
                     ->badge()
-                    ->color('gray'),
+                    ->color(
+                        fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
+                    ),
                 TextColumn::make('location.name')
                     ->label('Lokasi')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
                     ->sortable(),
                 TextColumn::make('updated_at')
                     ->label('Terakhir Diupdate')
-                    ->dateTime()
+                    ->dateTime('d M Y, H:i')
                     ->sortable(),
                 IconColumn::make('deleted_at')
                     ->label('Status Data')
@@ -166,7 +172,10 @@ class FixedInstancesRelationManager extends RelationManager
                         ->action(function (Model $record) {
                             try {
                                 $record->delete();
-                                Notification::make()->success()->title('Aset berhasil dihapus')->send();
+                                Notification::make()
+                                    ->success()
+                                    ->title('Aset berhasil dihapus')
+                                    ->send();
                             } catch (ValidationException $e) {
                                 Notification::make()
                                     ->danger()
@@ -180,7 +189,7 @@ class FixedInstancesRelationManager extends RelationManager
                 ])->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
-
+                //
             ]);
     }
 }

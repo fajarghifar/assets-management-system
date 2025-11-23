@@ -52,10 +52,12 @@ class InstalledItemInstanceForm
                             )
                             ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
                             ->searchable(['name', 'code'])
-                            ->required(),
+                            ->required()
+                            ->columnSpanFull(),
                         DatePicker::make('installed_at')
                             ->label('Tanggal Pemasangan')
-                            ->required(),
+                            ->required()
+                            ->maxDate(now()),
                         Textarea::make('notes')
                             ->label('Catatan')
                             ->rows(3)

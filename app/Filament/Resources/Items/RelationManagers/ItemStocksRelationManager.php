@@ -42,43 +42,42 @@ class ItemStocksRelationManager extends RelationManager
     {
         return $schema
             ->components([
-                    Select::make('location_id')
-                        ->label('Lokasi Penyimpanan')
-                        ->relationship('location', 'name')
-                        ->searchable()
-                        ->preload()
-                        ->optionsLimit(10)
-                        ->required()
-                        ->unique(
-                            table: 'item_stocks',
-                            column: 'location_id',
-                            modifyRuleUsing: function (Unique $rule, RelationManager $livewire) {
-                                return $rule->where('item_id', $livewire->getOwnerRecord()->id);
-                            },
-                            ignoreRecord: true
-                        )
-                        ->validationMessages([
-                            'unique' => 'Barang ini sudah terdaftar di lokasi tersebut.',
-                        ])
-                        ->columnSpanFull(),
-                    Grid::make(2)->schema([
-                        TextInput::make('quantity')
-                            ->label('Qty. Stok')
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->required()
-                            ->columnSpan(1),
-
-                        TextInput::make('min_quantity')
-                            ->label('Min. Stok')
-                            ->helperText('Warna akan merah jika stok ≤ angka ini.')
-                            ->numeric()
-                            ->default(0)
-                            ->minValue(0)
-                            ->required()
-                            ->columnSpan(1),
+                Select::make('location_id')
+                    ->label('Lokasi Penyimpanan')
+                    ->relationship('location', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->optionsLimit(10)
+                    ->required()
+                    ->unique(
+                        table: 'item_stocks',
+                        column: 'location_id',
+                        modifyRuleUsing: function (Unique $rule, RelationManager $livewire) {
+                            return $rule->where('item_id', $livewire->getOwnerRecord()->id);
+                        },
+                        ignoreRecord: true
+                    )
+                    ->validationMessages([
+                        'unique' => 'Barang ini sudah terdaftar di lokasi tersebut.',
                     ])
+                    ->columnSpanFull(),
+                Grid::make(2)->schema([
+                    TextInput::make('quantity')
+                        ->label('Qty. Stok')
+                        ->numeric()
+                        ->default(0)
+                        ->minValue(0)
+                        ->required()
+                        ->columnSpan(1),
+                    TextInput::make('min_quantity')
+                        ->label('Min. Stok')
+                        ->helperText('Warna akan merah jika stok ≤ angka ini.')
+                        ->numeric()
+                        ->default(0)
+                        ->minValue(0)
+                        ->required()
+                        ->columnSpan(1),
+                ])
                 ->columnSpanFull()
             ]);
     }
@@ -99,7 +98,9 @@ class ItemStocksRelationManager extends RelationManager
                 TextColumn::make('location.area.name')
                     ->label('Area')
                     ->badge()
-                    ->color('gray'),
+                    ->color(
+                        fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
+                    ),
                 TextColumn::make('quantity')
                     ->label('Qty. Stok')
                     ->sortable()
@@ -118,8 +119,7 @@ class ItemStocksRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->headerActions([
-                CreateAction::make()
-                    ->label('Tambah Lokasi Stok'),
+                CreateAction::make()->label('Tambah Lokasi Stok'),
             ])
             ->filters([
                 SelectFilter::make('area')
@@ -144,6 +144,7 @@ class ItemStocksRelationManager extends RelationManager
                         ->action(function (Model $record) {
                             try {
                                 $record->delete();
+
                                 Notification::make()
                                     ->success()
                                     ->title('Stok lokasi dihapus')
@@ -154,12 +155,19 @@ class ItemStocksRelationManager extends RelationManager
                                     ->title('Gagal Menghapus')
                                     ->body($e->validator->errors()->first())
                                     ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Terjadi Kesalahan')
+                                    ->body($e->getMessage())
+                                    ->send();
                             }
                         }),
                 ])->dropdownPlacement('left-start'),
             ])
             ->toolbarActions([
                 //
-            ]);
+            ])
+            ->defaultSort('quantity', 'asc');
     }
 }

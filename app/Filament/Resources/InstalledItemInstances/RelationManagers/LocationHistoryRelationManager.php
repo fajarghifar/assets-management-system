@@ -5,11 +5,12 @@ namespace App\Filament\Resources\InstalledItemInstances\RelationManagers;
 use BackedEnum;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use App\Models\InstalledItemInstance;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\DatePicker;
+use Illuminate\Database\Eloquent\Builder;
+use App\Models\InstalledItemLocationHistory;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class LocationHistoryRelationManager extends RelationManager
@@ -42,19 +43,20 @@ class LocationHistoryRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['location.area']))
             ->columns([
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('currentLocation.area.name')
+                TextColumn::make('location.area.name')
                     ->label('Area')
                     ->searchable()
                     ->sortable()
                     ->badge()
                     ->color(
-                        fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
+                        fn(InstalledItemLocationHistory $record) => $record->location->area?->category?->getColor() ?? 'gray'
                     ),
+                TextColumn::make('location.name')
+                    ->label('Lokasi')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('installed_at')
                     ->label('Tgl. Masuk')
                     ->date('d M Y')

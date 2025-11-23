@@ -15,6 +15,9 @@ use App\Filament\Resources\Items\Schemas\ItemForm;
 use App\Filament\Resources\Items\Tables\ItemsTable;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\Items\Schemas\ItemInfolist;
+use App\Filament\Resources\Items\RelationManagers\ItemStocksRelationManager;
+use App\Filament\Resources\Items\RelationManagers\FixedInstancesRelationManager;
+use App\Filament\Resources\Items\RelationManagers\InstalledInstancesRelationManager;
 
 class ItemResource extends Resource
 {
@@ -40,7 +43,9 @@ class ItemResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ItemStocksRelationManager::class,
+            FixedInstancesRelationManager::class,
+            InstalledInstancesRelationManager::class,
         ];
     }
 

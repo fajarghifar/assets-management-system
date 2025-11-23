@@ -15,7 +15,6 @@ class InstalledItemInstanceObserver
             if (!$instance->relationLoaded('item')) {
                 $instance->load('item');
             }
-
             if ($instance->item->type !== ItemType::Installed) {
                 throw ValidationException::withMessages([
                     'item_id' => 'Hanya Barang tipe Terpasang yang boleh dipindahkan lokasinya.',
@@ -34,14 +33,16 @@ class InstalledItemInstanceObserver
                 'notes' => 'Pemasangan awal',
             ]);
         } elseif ($instance->isDirty('current_location_id')) {
+            $movementDate = $instance->installed_at;
+
             InstalledItemLocationHistory::where('instance_id', $instance->id)
                 ->whereNull('removed_at')
-                ->update(['removed_at' => now()]);
+                ->update(['removed_at' => $movementDate]);
 
             InstalledItemLocationHistory::create([
                 'instance_id' => $instance->id,
                 'location_id' => $instance->current_location_id,
-                'installed_at' => now(),
+                'installed_at' => $movementDate,
                 'notes' => 'Pindah lokasi',
             ]);
         }
