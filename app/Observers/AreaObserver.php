@@ -11,7 +11,7 @@ class AreaObserver
     {
         if ($area->locations()->exists()) {
             throw ValidationException::withMessages([
-                'area' => "Gagal: Area '{$area->name}' tidak bisa dihapus karena masih memiliki Lokasi terdaftar.",
+                'name' => "Gagal: Area '{$area->name}' tidak bisa dihapus karena masih memiliki Lokasi yang terdaftar.",
             ]);
         }
     }

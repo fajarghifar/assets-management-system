@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Areas\Schemas;
 
 use App\Enums\AreaCategory;
+use Illuminate\Support\Str;
 use Filament\Schemas\Schema;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -22,8 +23,13 @@ class AreaForm
                             ->label('Kode Area')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(20)
-                            ->helperText('Contoh: PH-A, OFF-B, STORE-C')
+                            ->maxLength(5)
+                            ->dehydrateStateUsing(fn(string $state): string => Str::upper($state))
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('code', Str::upper($state));
+                            })
+                            ->helperText('Maksimal 5 Karakter (Contoh: OFF01, OFF02). Kode ini akan menjadi prefix untuk Lokasi.')
                             ->columnSpanFull(),
                         TextInput::make('name')
                             ->label('Nama Area')
@@ -33,7 +39,7 @@ class AreaForm
                             ->label('Kategori')
                             ->options(AreaCategory::class)
                             ->required()
-                            ->native(true),
+                            ->native(false),
                         Textarea::make('address')
                             ->label('Alamat')
                             ->rows(3)

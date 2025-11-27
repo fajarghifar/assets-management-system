@@ -13,11 +13,10 @@ return new class extends Migration
     {
         Schema::create('locations', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
+            $table->foreignId('area_id')->constrained()->onDelete('restrict');
+            // Kode Otomatis: Fixed 9 Karakter (Cth: BKS01-A9X)
+            $table->char('code', 9)->unique();
             $table->string('name');
-            $table->foreignId('area_id')
-                ->constrained()
-                ->onDelete('restrict');
             $table->text('description')->nullable();
             $table->timestamps();
 

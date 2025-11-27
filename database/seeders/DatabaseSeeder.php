@@ -23,12 +23,12 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            AreaSeeder::class,
-            LocationSeeder::class,
-            ItemSeeder::class,
-            FixedItemInstanceSeeder::class,
-            InstalledItemInstanceSeeder::class,
-            ItemStockSeeder::class
+            // AreaSeeder::class,
+            // LocationSeeder::class,
+            // ItemSeeder::class,
+            // FixedItemInstanceSeeder::class,
+            // InstalledItemInstanceSeeder::class,
+            // ItemStockSeeder::class
         ]);
     }
 }

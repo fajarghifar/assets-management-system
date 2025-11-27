@@ -28,30 +28,30 @@ class LocationsRelationManager extends RelationManager
         return $schema
             ->components([
                 Grid::make()
-                ->schema([
-                    TextInput::make('code')
-                        ->label('Kode Lokasi')
-                        ->required()
-                        ->unique(ignoreRecord: true)
-                        ->maxLength(30)
-                        ->helperText('Contoh: JMP1-RM1, BT-EVT'),
-                    TextInput::make('name')
-                        ->label('Nama Lokasi')
-                        ->required()
-                        ->maxLength(100),
-                    Textarea::make('description')
-                        ->label('Deskripsi')
-                        ->rows(3)
-                        ->columnSpanFull(),
-                ])
-                ->columnSpanFull(),
+                    ->schema([
+                        TextInput::make('code')
+                            ->label('Kode Lokasi')
+                            ->disabled()
+                            ->dehydrated()
+                            ->visible(fn(string $operation): bool => $operation === 'edit')
+                            ->maxLength(9),
+                        TextInput::make('name')
+                            ->label('Nama Lokasi')
+                            ->required()
+                            ->maxLength(100)
+                            ->columnSpan(fn(string $operation) => $operation === 'create' ? 2 : 1),
+                        Textarea::make('description')
+                            ->label('Deskripsi')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('name')
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
@@ -71,8 +71,10 @@ class LocationsRelationManager extends RelationManager
                     ->wrap(),
             ])
             ->headerActions([
-                    CreateAction::make()->label('Tambah Lokasi'),
-                ])
+                CreateAction::make()
+                    ->label('Tambah Lokasi')
+                    ->modalDescription('Kode Lokasi akan digenerate otomatis berdasarkan Kode Area.'),
+            ])
             ->filters([
                 //
             ])
@@ -102,7 +104,7 @@ class LocationsRelationManager extends RelationManager
                                 Notification::make()
                                     ->danger()
                                     ->title('Terjadi Kesalahan')
-                                    ->body('Data tidak dapat dihapus karena kendala sistem.')
+                                    ->body($e->getMessage())
                                     ->send();
                             }
                         }),

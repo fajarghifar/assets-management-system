@@ -6,6 +6,7 @@ use App\Models\Location;
 use App\Enums\AreaCategory;
 use App\Observers\AreaObserver;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
@@ -25,7 +26,7 @@ class Area extends Model
         'category' => AreaCategory::class,
     ];
 
-    public function locations()
+    public function locations(): HasMany
     {
         return $this->hasMany(Location::class);
     }

@@ -10,6 +10,7 @@ enum AreaCategory: string implements HasLabel, HasColor
     case Housing = 'housing';
     case Office = 'office';
     case Store = 'store';
+    case Warehouse = 'warehouse';
 
     public function getLabel(): ?string
     {
@@ -17,6 +18,7 @@ enum AreaCategory: string implements HasLabel, HasColor
             self::Housing => 'Perumahan',
             self::Office => 'Kantor',
             self::Store => 'Toko / Store',
+            self::Warehouse => 'Gudang',
         };
     }
 
@@ -26,6 +28,7 @@ enum AreaCategory: string implements HasLabel, HasColor
             self::Housing => 'info',
             self::Office => 'success',
             self::Store => 'warning',
+            self::Warehouse => 'gray',
         };
     }
 }

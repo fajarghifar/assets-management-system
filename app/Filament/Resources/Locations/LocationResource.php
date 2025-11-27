@@ -33,26 +33,25 @@ class LocationResource extends Resource
             ->components([
                 Select::make('area_id')
                     ->label('Area')
-                    ->relationship('area','name')
+                    ->relationship('area', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->optionsLimit(10)
-                    ->columnSpanFull(),
+                    ->disabledOn('edit'),
                 TextInput::make('code')
                     ->label('Kode Lokasi')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(30)
-                    ->disabledOn('edit')
-                    ->helperText('Contoh: JMP1-RM1, BT-EVT'),
+                    ->disabled()
+                    ->dehydrated()
+                    ->visible(fn(string $operation): bool => $operation === 'edit')
+                    ->maxLength(9),
                 TextInput::make('name')
                     ->label('Nama Lokasi')
                     ->required()
                     ->maxLength(100)
-                    ->placeholder('Contoh: Ruang Meeting Utama'),
+                    ->placeholder('Contoh: Ruang Meeting Utama')
+                    ->columnSpan(fn(string $operation) => $operation === 'create' ? 1 : 2),
                 Textarea::make('description')
-                    ->label('Deskripsi / Catatan')
+                    ->label('Deskripsi')
                     ->rows(3)
                     ->columnSpanFull(),
             ]);
@@ -65,11 +64,11 @@ class LocationResource extends Resource
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('No.')
-                    ->rowIndex()
-                    ->width('50px'),
+                    ->rowIndex(),
                 TextColumn::make('code')
                     ->label('Kode')
                     ->badge()
+                    ->color('primary')
                     ->searchable()
                     ->copyable(),
                 TextColumn::make('name')
@@ -78,17 +77,18 @@ class LocationResource extends Resource
                     ->sortable(),
                 TextColumn::make('area.name')
                     ->label('Area')
-                    ->searchable()
                     ->sortable()
                     ->badge()
                     ->color(fn(Location $record) => $record->area?->category?->getColor() ?? 'gray'),
                 TextColumn::make('description')
                     ->label('Deskripsi')
-                    ->limit(40)
+                    ->limit(50)
+                    ->wrap()
                     ->tooltip(fn(TextColumn $column) => $column->getState()),
             ])
             ->headerActions([
-                CreateAction::make()->label('Tambah Lokasi'),
+                CreateAction::make()->label('Tambah Lokasi')
+                    ->modalDescription('Kode Lokasi akan digenerate otomatis berdasarkan Kode Area.'),
             ])
             ->filters([
                 SelectFilter::make('area')

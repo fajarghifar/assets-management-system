@@ -14,7 +14,7 @@ return new class extends Migration
     {
         Schema::create('areas', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
+            $table->string('code', 5)->unique();
             $table->string('name');
             $table->string('category');
             $table->text('address')->nullable();
@@ -24,10 +24,6 @@ return new class extends Migration
             $table->index('name');
             $table->index('category');
         });
-
-        DB::statement(
-            'ALTER TABLE areas MODIFY code VARCHAR(50) COLLATE utf8mb4_unicode_ci UNIQUE'
-        );
     }
 
     /**

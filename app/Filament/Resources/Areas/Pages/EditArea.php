@@ -2,10 +2,11 @@
 
 namespace App\Filament\Resources\Areas\Pages;
 
-use App\Filament\Resources\Areas\AreaResource;
-use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use App\Filament\Resources\Areas\AreaResource;
 
 class EditArea extends EditRecord
 {
@@ -14,6 +15,11 @@ class EditArea extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('back')
+                ->label('Kembali')
+                ->icon('heroicon-m-arrow-left')
+                ->url($this->getResource()::getUrl('index'))
+                ->color('gray'),
             ViewAction::make(),
             DeleteAction::make(),
         ];

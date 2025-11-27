@@ -39,7 +39,7 @@ class Location extends Model
 
     public function installedItemInstances(): HasMany
     {
-        return $this->hasMany(InstalledItemInstance::class);
+        return $this->hasMany(InstalledItemInstance::class, 'current_location_id');
     }
 
     public function installedItemHistory(): HasMany
