@@ -2,10 +2,12 @@
 
 namespace App\Filament\Resources\Items\RelationManagers;
 
+use App\Models\ItemStock;
 use BackedEnum;
 use App\Models\Area;
 use App\Models\Item;
 use App\Enums\ItemType;
+use App\Models\Location;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
 use Filament\Actions\EditAction;
@@ -15,6 +17,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Grid;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\Rules\Unique;
@@ -44,8 +47,13 @@ class ItemStocksRelationManager extends RelationManager
             ->components([
                 Select::make('location_id')
                     ->label('Lokasi Penyimpanan')
-                    ->relationship('location', 'name')
-                    ->searchable()
+                    ->relationship(
+                        name: 'location',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query) => $query->with('area')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
+                    ->searchable(['name', 'code'])
                     ->preload()
                     ->optionsLimit(10)
                     ->required()
@@ -117,6 +125,16 @@ class ItemStocksRelationManager extends RelationManager
                     ->label('Terakhir Diupdate')
                     ->dateTime()
                     ->sortable(),
+                IconColumn::make('deleted_at')
+                    ->label('Status Data')
+                    ->state(fn($record) => !is_null($record->deleted_at))
+                    ->boolean()
+                    ->trueColor('danger')
+                    ->falseColor('success')
+                    ->trueIcon('heroicon-o-trash')
+                    ->falseIcon('heroicon-o-check-circle')
+                    ->tooltip(fn(ItemStock $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->alignCenter(),
             ])
             ->headerActions([
                 CreateAction::make()->label('Tambah Lokasi Stok'),
@@ -144,11 +162,7 @@ class ItemStocksRelationManager extends RelationManager
                         ->action(function (Model $record) {
                             try {
                                 $record->delete();
-
-                                Notification::make()
-                                    ->success()
-                                    ->title('Stok lokasi dihapus')
-                                    ->send();
+                                Notification::make()->success()->title('Stok lokasi dihapus')->send();
                             } catch (ValidationException $e) {
                                 Notification::make()
                                     ->danger()

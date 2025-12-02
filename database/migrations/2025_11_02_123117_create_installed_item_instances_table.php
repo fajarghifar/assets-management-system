@@ -13,18 +13,22 @@ return new class extends Migration
     {
         Schema::create('installed_item_instances', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
-            $table->foreignId('item_id')->constrained()->cascadeOnDelete();
+            $table->string('code', 50)->unique();
+            $table->foreignId('item_id')->constrained()->restrictOnDelete();
             $table->string('serial_number')->nullable()->unique();
-            $table->foreignId('current_location_id')->constrained('locations');
+            $table->foreignId('current_location_id')
+                ->constrained('locations')
+                ->restrictOnDelete();
             $table->date('installed_at');
             $table->text('notes')->nullable();
+
             $table->softDeletes();
             $table->timestamps();
 
             // Indexes
             $table->index(['current_location_id', 'deleted_at']);
             $table->index(['item_id', 'deleted_at']);
+            $table->index('installed_at');
         });
     }
 

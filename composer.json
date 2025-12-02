@@ -75,7 +75,8 @@
             "@php artisan migrate:fresh",
             "@php artisan db:seed --class=UserSeeder",
             "@php artisan db:seed --class=AreaSeeder",
-            "@php artisan db:seed --class=LocationSeeder"
+            "@php artisan db:seed --class=LocationSeeder",
+            "@php artisan db:seed --class=ItemSeeder"
         ]
     },
     "extra": {

@@ -49,10 +49,12 @@ class FixedInstancesRelationManager extends RelationManager
         return $schema
             ->components([
                 TextInput::make('code')
-                    ->label('Kode Instance')
-                    ->required()
+                    ->label('Kode Aset')
+                    ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
+                    ->disabled()
+                    ->dehydrated()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(30)
+                    ->maxLength(50)
                     ->columnSpanFull(),
                 TextInput::make('serial_number')
                     ->label('Nomor Seri')
@@ -68,8 +70,12 @@ class FixedInstancesRelationManager extends RelationManager
                     ->live(),
                 Select::make('location_id')
                     ->label('Lokasi Saat Ini')
-                    ->relationship('location', 'name')
-                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
+                    ->relationship(
+                        name: 'location',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query) => $query->with('area')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                     ->searchable(['name', 'code'])
                     ->preload()
                     ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value)
@@ -90,7 +96,7 @@ class FixedInstancesRelationManager extends RelationManager
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode')
+                    ->label('Kode Aset')
                     ->searchable()
                     ->sortable()
                     ->copyable()
@@ -102,6 +108,10 @@ class FixedInstancesRelationManager extends RelationManager
                     ->copyable()
                     ->fontFamily('mono')
                     ->placeholder('-'),
+                TextColumn::make('location.name')
+                    ->label('Lokasi')
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('location.area.name')
                     ->label('Area')
                     ->sortable()
@@ -109,10 +119,6 @@ class FixedInstancesRelationManager extends RelationManager
                     ->color(
                         fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
                     ),
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->sortable()
-                    ->searchable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -133,10 +139,7 @@ class FixedInstancesRelationManager extends RelationManager
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()
-                    ->label('Registrasi Unit Baru')
-                    ->modalWidth('lg')
-                    ->slideOver(),
+                CreateAction::make()->label('Registrasi Unit Baru'),
             ])
             ->filters([
                 SelectFilter::make('area')
@@ -165,9 +168,7 @@ class FixedInstancesRelationManager extends RelationManager
             ])
             ->recordActions([
                 ActionGroup::make([
-                    EditAction::make()
-                        ->modalWidth('lg')
-                        ->slideOver(),
+                    EditAction::make(),
                     DeleteAction::make()
                         ->action(function (Model $record) {
                             try {
@@ -181,6 +182,12 @@ class FixedInstancesRelationManager extends RelationManager
                                     ->danger()
                                     ->title('Gagal Menghapus')
                                     ->body($e->validator->errors()->first())
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Terjadi Kesalahan')
+                                    ->body($e->getMessage())
                                     ->send();
                             }
                         }),

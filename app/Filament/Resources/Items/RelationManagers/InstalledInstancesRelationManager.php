@@ -21,10 +21,12 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
+use Illuminate\Validation\ValidationException;
 use Filament\Resources\RelationManagers\RelationManager;
 
 class InstalledInstancesRelationManager extends RelationManager
@@ -45,18 +47,25 @@ class InstalledInstancesRelationManager extends RelationManager
         return $schema
             ->components([
                 TextInput::make('code')
-                    ->label('Kode Instance')
-                    ->required()
+                    ->label('Kode Aset')
+                    ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
+                    ->disabled()
+                    ->dehydrated()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(30),
+                    ->maxLength(50)
+                    ->columnSpanFull(),
                 TextInput::make('serial_number')
                     ->label('Nomor Seri')
                     ->maxLength(100)
                     ->unique(ignoreRecord: true),
                 Select::make('current_location_id')
                     ->label('Lokasi Pemasangan')
-                    ->relationship('currentLocation', 'name')
-                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->code})")
+                    ->relationship(
+                        name: 'currentLocation',
+                        titleAttribute: 'name',
+                        modifyQueryUsing: fn(Builder $query) => $query->with('area')
+                    )
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                     ->searchable(['name', 'code'])
                     ->required()
                     ->columnSpanFull(),
@@ -76,20 +85,24 @@ class InstalledInstancesRelationManager extends RelationManager
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['currentLocation.area']))
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('No.')
+                    ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode Instance')
+                    ->label('Kode Aset')
                     ->searchable()
                     ->sortable()
                     ->copyable()
-                    ->weight('medium')
+                    ->badge()
                     ->color('primary'),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable()
                     ->fontFamily('mono')
                     ->toggleable(),
+                TextColumn::make('currentLocation.name')
+                    ->label('Lokasi')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('currentLocation.area.name')
                     ->label('Area')
                     ->searchable()
@@ -98,10 +111,6 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->color(
                         fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
                     ),
-                TextColumn::make('currentLocation.name')
-                    ->label('Lokasi Pemasangan')
-                    ->searchable()
-                    ->sortable(),
                 TextColumn::make('installed_at')
                     ->label('Tgl. Pemasangan')
                     ->date('d M Y')
@@ -133,8 +142,27 @@ class InstalledInstancesRelationManager extends RelationManager
                 ActionGroup::make([
                     EditAction::make(),
                     DeleteAction::make()
-                        ->modalHeading('Hapus Instance?')
-                        ->modalDescription('Instance akan disembunyikan (Soft Delete), riwayat lokasi tetap tersimpan.'),
+                        ->action(function (Model $record) {
+                            try {
+                                $record->delete();
+                                Notification::make()
+                                    ->success()
+                                    ->title('Aset berhasil dihapus')
+                                    ->send();
+                            } catch (ValidationException $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Gagal Menghapus')
+                                    ->body($e->validator->errors()->first())
+                                    ->send();
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->danger()
+                                    ->title('Terjadi Kesalahan')
+                                    ->body($e->getMessage())
+                                    ->send();
+                            }
+                        }),
                     ForceDeleteAction::make(),
                     RestoreAction::make(),
                 ])->dropdownPlacement('left-start'),

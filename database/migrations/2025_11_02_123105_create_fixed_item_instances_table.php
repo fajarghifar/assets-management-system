@@ -13,20 +13,21 @@ return new class extends Migration
     {
         Schema::create('fixed_item_instances', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
-            $table->foreignId('item_id')->constrained()->cascadeOnDelete();
+            $table->string('code', 50)->unique();
+            $table->foreignId('item_id')->constrained()->restrictOnDelete();
             $table->string('serial_number')->nullable()->unique();
-            $table->string('status')->default('available')->index();
+            $table->string('status')->default('available');
             $table->foreignId('location_id')
                 ->nullable()
                 ->constrained('locations')
-                ->nullOnDelete();
+                ->restrictOnDelete();
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
             // Indexes
             $table->index('item_id');
+            $table->index('status');
         });
     }
 

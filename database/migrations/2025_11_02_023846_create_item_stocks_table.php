@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('item_stocks', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('location_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('item_id')->constrained()->restrictOnDelete();
+            $table->foreignId('location_id')->constrained()->restrictOnDelete();
             $table->unsignedInteger('quantity')->default(0);
             $table->unsignedInteger('min_quantity')->default(0);
             $table->softDeletes();

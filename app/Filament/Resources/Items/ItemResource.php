@@ -62,15 +62,6 @@ class ItemResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            // ->with([
-            //     'stocks.location',
-            //     'fixedInstances.currentLocation',
-            //     'installedInstances.installedLocation'
-            // ])
-            // ->withCount([
-            //     'fixedInstances',
-            //     'installedInstances',
-            // ])
             ->withTrashed();
     }
 

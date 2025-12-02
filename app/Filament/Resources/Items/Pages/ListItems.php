@@ -22,15 +22,13 @@ class ListItems extends ListRecords
         return '';
     }
 
-    protected function getTableQuery(): Builder
+    protected function tableQuery(): Builder
     {
-        $query = parent::getTableQuery();
-
-        $query->withCount([
-            'fixedInstances',
-            'installedInstances',
-        ]);
-
-        return $query;
+        return parent::tableQuery()
+            ->withCount([
+                'fixedInstances',
+                'installedInstances',
+            ])
+            ->withSum('stocks', 'quantity');
     }
 }

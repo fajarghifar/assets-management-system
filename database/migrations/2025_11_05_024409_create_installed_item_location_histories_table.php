@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('instance_id')
                 ->constrained('installed_item_instances')
                 ->cascadeOnDelete();
-            $table->foreignId('location_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('location_id')->constrained();
             $table->date('installed_at');
             $table->date('removed_at')->nullable();
             $table->text('notes')->nullable();

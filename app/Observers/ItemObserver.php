@@ -3,23 +3,33 @@
 namespace App\Observers;
 
 use App\Models\Item;
-use App\Enums\ItemType;
 use Illuminate\Validation\ValidationException;
 
 class ItemObserver
 {
+    public function creating(Item $item): void
+    {
+        if (!empty($item->code)) {
+            $item->code = strtoupper(trim($item->code));
+        }
+    }
+
     public function updating(Item $item): void
     {
-        if ($item->isDirty('type')) {
-            $originalType = $item->getOriginal('type');
+        if ($item->isDirty('code')) {
+            $relation = $item->type->getRelationName();
+            if ($item->$relation()->exists()) {
+                throw ValidationException::withMessages([
+                    'code' => 'Kode barang tidak boleh diubah karena sudah memiliki stok/aset turunan.',
+                ]);
+            }
+            $item->code = strtoupper(trim($item->code));
+        }
 
-            if ($originalType instanceof ItemType) {
-                $relation = $originalType->getRelationName();
-                if ($item->$relation()->exists()) {
-                    throw ValidationException::withMessages([
-                        'type' => 'Tipe barang tidak dapat diubah karena sudah memiliki data transaksi/stok terkait.',
-                    ]);
-                }
+        if ($item->isDirty('type')) {
+            $relation = $item->type->getRelationName();
+            if ($item->$relation()->exists()) {
+                throw ValidationException::withMessages(['type' => 'Tipe barang tidak dapat diubah karena sudah ada data transaksi.']);
             }
         }
     }
@@ -27,7 +37,7 @@ class ItemObserver
     public function deleting(Item $item): void
     {
         if (!$item->isForceDeleting()) {
-            $item->ensureCanBeDeleted();
+            $item->type->validateDeletion($item);
 
             $relation = $item->type->getRelationName();
             $item->$relation()->delete();

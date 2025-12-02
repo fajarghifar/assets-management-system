@@ -19,10 +19,17 @@ class ItemForm
                     ->columns(2)
                     ->schema([
                         TextInput::make('code')
-                            ->label('Kode Barang')
+                            ->label('Kode Barang (SKU)')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(50)
+                            ->maxLength(20)
+                            ->placeholder('Contoh: LPT01')
+                            ->helperText('Kode ini akan menjadi prefix untuk aset turunan (Ex: LPT01-xxxxx).')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('code', strtoupper($state));
+                            })
+                            ->disabled(fn($record) => $record?->exists)
                             ->columnSpanFull(),
                         TextInput::make('name')
                             ->label('Nama Barang')
