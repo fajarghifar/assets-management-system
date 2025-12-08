@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\InstalledItemInstances\Schemas;
+namespace App\Filament\Resources\InstalledItems\Schemas;
 
 use App\Models\Item;
 use App\Models\Location;
@@ -12,7 +12,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 
-class InstalledItemInstanceForm
+class InstalledItemForm
 {
     public static function configure(Schema $schema): Schema
     {
@@ -21,14 +21,14 @@ class InstalledItemInstanceForm
                 Section::make('Informasi Aset')
                     ->columns(2)
                     ->schema([
-                        TextInput::make('code')
-                            ->label('Kode Aset')
-                            ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
-                            ->disabled()
-                            ->dehydrated()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(50)
-                            ->columnSpanFull(),
+                        // TextInput::make('code')
+                        //     ->label('Kode Aset')
+                        //     ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
+                        //     ->disabled()
+                        //     ->dehydrated()
+                        //     ->unique(ignoreRecord: true)
+                        //     ->maxLength(50)
+                        //     ->columnSpanFull(),
                         Select::make('item_id')
                             ->label('Nama Barang')
                             ->relationship(
@@ -47,21 +47,21 @@ class InstalledItemInstanceForm
                             ->maxLength(100)
                             ->unique(ignoreRecord: true)
                             ->nullable(),
-                        Select::make('current_location_id')
+                        Select::make('location_id')
                             ->label('Lokasi Pemasangan')
                             ->relationship(
-                                name: 'currentLocation',
+                                name: 'location',
                                 titleAttribute: 'name',
                                 modifyQueryUsing: fn(Builder $query) => $query->with('area')
                             )
                             ->preload()
                             ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
                             ->searchable(['name', 'code'])
-                            ->required()
-                            ->columnSpanFull(),
+                            ->required(),
                         DatePicker::make('installed_at')
                             ->label('Tanggal Pemasangan')
                             ->required()
+                            ->default(now())
                             ->maxDate(now()),
                         Textarea::make('notes')
                             ->label('Catatan')

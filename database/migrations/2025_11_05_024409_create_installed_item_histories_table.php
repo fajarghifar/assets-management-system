@@ -11,19 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('installed_item_location_histories', function (Blueprint $table) {
+        Schema::create('installed_item_histories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('instance_id')
-                ->constrained('installed_item_instances')
+            $table->foreignId('installed_item_id')
+                ->constrained('installed_items')
                 ->cascadeOnDelete();
-            $table->foreignId('location_id')->constrained();
+            $table->foreignId('location_id')
+                ->constrained('locations')
+                ->cascadeOnDelete();
             $table->date('installed_at');
             $table->date('removed_at')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
 
             // Indexes
-            $table->index(['instance_id', 'installed_at']);
+            $table->index(['installed_item_id', 'installed_at']);
             $table->index(['location_id', 'removed_at']);
         });
     }

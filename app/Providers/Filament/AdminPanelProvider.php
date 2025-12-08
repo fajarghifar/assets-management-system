@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Pages\Dashboard;
+use Filament\Support\Enums\Width;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
 use Filament\Navigation\NavigationItem;
@@ -21,13 +22,12 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use App\Filament\Resources\Locations\LocationResource;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Filament\Resources\Borrowings\BorrowingResource;
-use App\Filament\Resources\ItemStocks\ItemStockResource;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use App\Filament\Resources\FixedItemInstances\FixedItemInstanceResource;
-use App\Filament\Resources\InstalledItemInstances\InstalledItemInstanceResource;
+use App\Filament\Resources\InstalledItems\InstalledItemResource;
+use App\Filament\Resources\InventoryItems\InventoryItemResource;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -67,7 +67,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->spa()
             ->sidebarCollapsibleOnDesktop()
-            // ->maxContentWidth(Width::Full)
+            ->maxContentWidth(Width::Full)
             ->topNavigation()
             ->navigationGroups([
                 NavigationGroup::make()
@@ -89,21 +89,16 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Inventaris')
                     ->sort(1)
                     ->isActiveWhen(fn() => request()->routeIs(ItemResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Barang Habis Pakai')
-                    ->url(fn(): string => ItemStockResource::getUrl('index'))
+                NavigationItem::make('Daftar Aset Inventaris')
+                    ->url(fn(): string => InventoryItemResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(2)
-                    ->isActiveWhen(fn() => request()->routeIs(ItemStockResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Daftar Aset Tetap')
-                    ->url(fn(): string => FixedItemInstanceResource::getUrl('index'))
-                    ->group('Inventaris')
-                    ->sort(3)
-                    ->isActiveWhen(fn() => request()->routeIs(FixedItemInstanceResource::getRouteBaseName() . '*')),
+                    ->isActiveWhen(fn() => request()->routeIs(InventoryItemResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Daftar Aset Terpasang')
-                    ->url(fn(): string => InstalledItemInstanceResource::getUrl('index'))
+                    ->url(fn(): string => InstalledItemResource::getUrl('index'))
                     ->group('Inventaris')
                     ->sort(4)
-                    ->isActiveWhen(fn() => request()->routeIs(InstalledItemInstanceResource::getRouteBaseName() . '*')),
+                    ->isActiveWhen(fn() => request()->routeIs(InstalledItemResource::getRouteBaseName() . '*')),
                 NavigationItem::make('Ajukan Peminjaman')
                     ->url(fn(): string => CreateBorrowingPage::getUrl())
                     ->group('Peminjaman')

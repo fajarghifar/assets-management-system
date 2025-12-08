@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Filament\Resources\InstalledItemInstances\Schemas;
+namespace App\Filament\Resources\InstalledItems\Schemas;
 
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Infolists\Components\TextEntry;
 
-class InstalledItemInstanceInfolist
+class InstalledItemInfolist
 {
     public static function configure(Schema $schema): Schema
     {
@@ -25,17 +25,15 @@ class InstalledItemInstanceInfolist
                             ->label('Nama Barang'),
                         TextEntry::make('serial_number')
                             ->label('Nomor Seri')
+                            ->copyable()
                             ->placeholder('-')
                             ->fontFamily('mono'),
-                        TextEntry::make('currentLocation')
+                        TextEntry::make('location')
                             ->label('Lokasi Saat Ini')
-                            ->badge()
-                            ->color('info')
-                            ->icon('heroicon-m-map-pin')
                             ->formatStateUsing(
                                 fn($record) =>
-                                $record->currentLocation
-                                ? $record->currentLocation->area->name . ' — ' . $record->currentLocation->name
+                                $record->location
+                                ? $record->location->name . ' — ' . $record->location->area->name
                                 : '-'
                             ),
                         TextEntry::make('installed_at')

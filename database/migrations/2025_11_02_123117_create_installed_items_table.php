@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('installed_item_instances', function (Blueprint $table) {
+        Schema::create('installed_items', function (Blueprint $table) {
             $table->id();
             $table->string('code', 50)->unique();
             $table->foreignId('item_id')->constrained()->restrictOnDelete();
             $table->string('serial_number')->nullable()->unique();
-            $table->foreignId('current_location_id')
+            $table->foreignId('location_id')
                 ->constrained('locations')
                 ->restrictOnDelete();
             $table->date('installed_at');
@@ -26,7 +26,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes
-            $table->index(['current_location_id', 'deleted_at']);
+            $table->index(['location_id', 'deleted_at']);
             $table->index(['item_id', 'deleted_at']);
             $table->index('installed_at');
         });

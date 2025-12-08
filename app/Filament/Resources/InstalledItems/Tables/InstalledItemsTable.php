@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Filament\Resources\InstalledItemInstances\Tables;
+namespace App\Filament\Resources\InstalledItems\Tables;
 
 use Filament\Tables\Table;
+use App\Models\InstalledItem;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
-use App\Models\InstalledItemInstance;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -17,7 +17,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 
-class InstalledItemInstancesTable
+class InstalledItemsTable
 {
     public static function configure(Table $table): Table
     {
@@ -25,7 +25,7 @@ class InstalledItemInstancesTable
             ->heading('Daftar Aset Terpasang')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('No.')
+                    ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
                     ->label('Kode Aset')
@@ -40,20 +40,18 @@ class InstalledItemInstancesTable
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable()
+                    ->copyable()
                     ->placeholder('-')
                     ->fontFamily('mono'),
-                TextColumn::make('currentLocation.area.name')
+                TextColumn::make('location.name')
+                    ->label('Lokasi Pemasangan')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('location.area.name')
                     ->label('Area')
                     ->searchable()
                     ->sortable()
-                    ->badge()
-                    ->color(
-                        fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
-                    ),
-                TextColumn::make('currentLocation.name')
-                    ->label('Lokasi')
-                    ->searchable()
-                    ->sortable(),
+                    ->badge(),
                 TextColumn::make('installed_at')
                     ->label('Tgl. Pemasangan')
                     ->date()
@@ -66,7 +64,7 @@ class InstalledItemInstancesTable
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(InstalledItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->tooltip(fn(InstalledItem $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
                     ->alignCenter(),
             ])
             ->headerActions([
@@ -74,6 +72,7 @@ class InstalledItemInstancesTable
             ])
             ->filters([
                 SelectFilter::make('item')
+                    ->label('Nama Barang')
                     ->relationship(
                         name: 'item',
                         titleAttribute: 'name',
@@ -81,10 +80,15 @@ class InstalledItemInstancesTable
                             ->where('type', 'installed')
                             ->orderBy('name')
                     )
+                    ->searchable()
+                    ->preload()
                     ->multiple(),
                 SelectFilter::make('area')
                     ->label('Area')
-                    ->relationship('currentLocation.area', 'name'),
+                    ->relationship('location.area', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->multiple(),
                 TrashedFilter::make()
                     ->label('Status Data')
                     ->placeholder('Hanya data aktif')

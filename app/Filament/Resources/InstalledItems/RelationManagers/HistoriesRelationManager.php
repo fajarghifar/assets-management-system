@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\InstalledItemInstances\RelationManagers;
+namespace App\Filament\Resources\InstalledItems\RelationManagers;
 
 use BackedEnum;
 use Filament\Tables\Table;
@@ -10,12 +10,11 @@ use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\InstalledItemLocationHistory;
 use Filament\Resources\RelationManagers\RelationManager;
 
-class LocationHistoryRelationManager extends RelationManager
+class HistoriesRelationManager extends RelationManager
 {
-    protected static string $relationship = 'locationHistory';
+    protected static string $relationship = 'histories';
 
     protected static ?string $title = 'Riwayat Lokasi';
 
@@ -48,18 +47,15 @@ class LocationHistoryRelationManager extends RelationManager
                 TextColumn::make('rowIndex')
                     ->label('#')
                     ->rowIndex(),
-                TextColumn::make('location.area.name')
-                    ->label('Area')
-                    ->searchable()
-                    ->sortable()
-                    ->badge()
-                    ->color(
-                        fn(InstalledItemLocationHistory $record) => $record->location->area?->category?->getColor() ?? 'gray'
-                    ),
                 TextColumn::make('location.name')
                     ->label('Lokasi')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('location.area.name')
+                    ->label('Area')
+                    ->searchable()
+                    ->sortable()
+                    ->badge(),
                 TextColumn::make('installed_at')
                     ->label('Tgl. Masuk')
                     ->date('d M Y')

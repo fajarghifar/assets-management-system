@@ -8,12 +8,12 @@ use App\Enums\ItemType;
 use App\Models\Location;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
+use App\Models\InstalledItem;
 use Filament\Actions\EditAction;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
-use App\Models\InstalledItemInstance;
 use Filament\Forms\Components\Select;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Textarea;
@@ -58,10 +58,10 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->label('Nomor Seri')
                     ->maxLength(100)
                     ->unique(ignoreRecord: true),
-                Select::make('current_location_id')
+                Select::make('location_id')
                     ->label('Lokasi Pemasangan')
                     ->relationship(
-                        name: 'currentLocation',
+                        name: 'location',
                         titleAttribute: 'name',
                         modifyQueryUsing: fn(Builder $query) => $query->with('area')
                     )
@@ -83,7 +83,7 @@ class InstalledInstancesRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn(Builder $query) => $query->with(['currentLocation.area']))
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['location.area']))
             ->columns([
                 TextColumn::make('rowIndex')
                     ->label('#')
@@ -100,15 +100,12 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->searchable()
                     ->placeholder('-')
                     ->fontFamily('mono'),
-                TextColumn::make('currentLocation.area.name')
+                TextColumn::make('location.area.name')
                     ->label('Area')
                     ->searchable()
                     ->sortable()
-                    ->badge()
-                    ->color(
-                        fn(InstalledItemInstance $record) => $record->currentLocation->area?->category?->getColor() ?? 'gray'
-                    ),
-                TextColumn::make('currentLocation.name')
+                    ->badge(),
+                TextColumn::make('location.name')
                     ->label('Lokasi')
                     ->searchable()
                     ->sortable(),
@@ -124,13 +121,13 @@ class InstalledInstancesRelationManager extends RelationManager
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(InstalledItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->tooltip(fn(InstalledItem $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
                     ->alignCenter(),
             ])
             ->filters([
                 SelectFilter::make('area')
                     ->label('Area')
-                    ->relationship('currentLocation.area', 'name'),
+                    ->relationship('location.area', 'name'),
                 TrashedFilter::make()
                     ->label('Status Data')
                     ->placeholder('Hanya data aktif')

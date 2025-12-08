@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\InstalledItem;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class InstalledItemLocationHistory extends Model
+class InstalledItemHistory extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'instance_id',
+        'installed_item_id',
         'location_id',
         'installed_at',
         'removed_at',
@@ -22,10 +23,9 @@ class InstalledItemLocationHistory extends Model
         'removed_at' => 'date',
     ];
 
-    // Relasi
-    public function instance()
+    public function installedItem()
     {
-        return $this->belongsTo(InstalledItemInstance::class, 'instance_id');
+        return $this->belongsTo(InstalledItem::class);
     }
 
     public function location()
