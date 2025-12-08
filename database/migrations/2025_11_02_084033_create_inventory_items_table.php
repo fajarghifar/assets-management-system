@@ -11,22 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fixed_item_instances', function (Blueprint $table) {
+        Schema::create('inventory_items', function (Blueprint $table) {
             $table->id();
             $table->string('code', 50)->unique();
-            $table->foreignId('item_id')->constrained()->restrictOnDelete();
-            $table->string('serial_number')->nullable()->unique();
+            $table->foreignId('item_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('location_id')->constrained()->restrictOnDelete();
+            $table->string('serial_number')->nullable();
             $table->string('status')->default('available');
-            $table->foreignId('location_id')
-                ->nullable()
-                ->constrained('locations')
-                ->restrictOnDelete();
+            $table->integer('quantity')->default(1);
+            $table->integer('min_quantity')->default(0);
             $table->text('notes')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
             // Indexes
-            $table->index('item_id');
+            $table->index(['item_id', 'location_id']);
             $table->index('status');
         });
     }
@@ -36,6 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fixed_item_instances');
+        Schema::dropIfExists('inventory_items');
     }
 };

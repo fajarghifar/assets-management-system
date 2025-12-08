@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\FixedItemInstances;
+namespace App\Filament\Resources\InventoryItems;
 
 use App\Models\Area;
 use App\Models\Item;
@@ -8,15 +8,15 @@ use App\Enums\ItemType;
 use App\Models\Location;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
-use App\Enums\FixedItemStatus;
+use App\Models\InventoryItem;
+use App\Enums\InventoryStatus;
 use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
-use App\Models\FixedItemInstance;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\RestoreAction;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Forms\Components\Textarea;
@@ -28,13 +28,14 @@ use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\FixedItemInstances\Pages\ManageFixedItemInstances;
+use App\Filament\Resources\InventoryItems\Pages\ManageInventoryItems;
 
-class FixedItemInstanceResource extends Resource
+class InventoryItemResource extends Resource
 {
-    protected static ?string $model = FixedItemInstance::class;
+    protected static ?string $model = InventoryItem::class;
 
     protected static bool $shouldRegisterNavigation = false;
 
@@ -43,65 +44,80 @@ class FixedItemInstanceResource extends Resource
         return $schema
             ->components([
                 Select::make('item_id')
-                    ->label('Nama Barang (Master)')
-                    ->relationship(
-                        name: 'item',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn(Builder $query) => $query->where('type', ItemType::Fixed)
-                    )
-                    ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->code} - {$record->name}")
-                    ->searchable(['name', 'code'])
+                    ->label('Nama Barang')
+                    ->relationship('item', 'name')
+                    ->getOptionLabelFromRecordUsing(fn(Item $record) => "{$record->name} ({$record->code})")
+                    ->searchable()
                     ->preload()
                     ->required()
+                    ->live()
+                    ->afterStateUpdated(function (Set $set, $state) {
+                        if ($state) {
+                            $item = Item::find($state);
+                            $set('is_consumable', $item?->type === ItemType::Consumable);
+
+                            if ($item?->type === ItemType::Fixed) {
+                                $set('quantity', 1);
+                            }
+                        }
+                    })
                     ->columnSpanFull(),
-                TextInput::make('code')
-                    ->label('Kode Aset')
-                    ->placeholder('Otomatis: [KODE_ITEM]-[TANGGAL]-[ACAK]')
-                    ->disabled()
-                    ->dehydrated()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(30),
                 TextInput::make('serial_number')
-                    ->label('Nomor Seri (SN)')
+                    ->label('Nomor Seri')
                     ->maxLength(100)
                     ->unique(ignoreRecord: true)
-                    ->nullable()
-                    ->placeholder('Opsional (SN Pabrik)'),
-                Select::make('status')
-                    ->label('Status Kondisi')
-                    ->options(FixedItemStatus::class)
-                    ->default(FixedItemStatus::Available)
-                    ->required()
-                    ->live(),
+                    ->nullable(),
                 Select::make('location_id')
                     ->label('Lokasi Penyimpanan')
-                    ->relationship(
-                        name: 'location',
-                        titleAttribute: 'name',
-                        modifyQueryUsing: fn(Builder $query) => $query->with('area')
-                    )
-                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} ({$record->area->name})")
-                    ->searchable(['name', 'code'])
+                    ->relationship('location', 'name')
+                    ->searchable(['name'])
                     ->preload()
-                    ->required(fn(Get $get) => $get('status') === FixedItemStatus::Available->value)
-                    ->columnSpanFull(),
+                    ->getOptionLabelFromRecordUsing(fn(Location $record) => "{$record->name} - {$record->area->name}")
+                    ->required(),
+
+                // --- UI KHUSUS FIXED ASSET (Hidden jika Consumable) ---
+                Select::make('status')
+                    ->label('Status')
+                    ->options(InventoryStatus::class)
+                    ->default(InventoryStatus::Available)
+                    ->required()
+                    ->visible(fn (Get $get) => !$get('is_consumable')),
+
+                // --- UI KHUSUS CONSUMABLE (Hidden jika Fixed) ---
+                TextInput::make('quantity')
+                    ->label('Qty. Stok')
+                    ->numeric()
+                    ->default(1)
+                    ->minValue(0)
+                    ->required()
+                    ->disabled(fn(Get $get) => !$get('is_consumable'))
+                    ->visible(fn(Get $get) => $get('is_consumable')),
+                TextInput::make('min_quantity')
+                    ->label('Min. Stok')
+                    ->numeric()
+                    ->default(5)
+                    ->visible(fn(Get $get) => $get('is_consumable')),
                 Textarea::make('notes')
                     ->label('Catatan')
-                    ->rows(3)
                     ->columnSpanFull(),
+
+                // Hidden field bantu untuk logika UI (reaktif terhadap tipe item)
+                Hidden::make('is_consumable')
+                    ->default(false)
+                    ->dehydrated(false),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Daftar Aset Tetap')
+            ->recordTitleAttribute('InventoryItem')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('No.')
+                    ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode Aset')
+                    ->label('Kode')
                     ->searchable()
                     ->copyable()
                     ->weight('medium')
@@ -110,27 +126,34 @@ class FixedItemInstanceResource extends Resource
                     ->label('Nama Barang')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('item.type')
+                    ->label('Tipe')
+                    ->badge()
+                    ->sortable(),
                 TextColumn::make('serial_number')
                     ->label('Nomor Seri')
                     ->searchable()
-                    ->copyable(),
+                    ->copyable()
+                    ->fontFamily('mono')
+                    ->placeholder('-'),
+                TextColumn::make('location.name')
+                    ->label('Lokasi')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('location.area.name')
                     ->label('Area')
                     ->sortable()
                     ->badge()
-                    ->color(
-                        fn($record) => $record->location->area?->category?->getColor() ?? 'gray'
-                    ),
-                TextColumn::make('location.name')
-                    ->label('Lokasi')
-                    ->sortable(),
+                    ->color(fn(InventoryItem $record): ?string => $record->location?->area?->category?->getColor() ?? 'gray'),
+                TextColumn::make('quantity')
+                    ->label('Qty. Stok')
+                    ->sortable()
+                    ->color(fn(InventoryItem $record) => $record->quantity <= $record->min_quantity ? 'danger' : 'success')
+                    ->badge()
+                    ->alignCenter(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->sortable(),
-                TextColumn::make('updated_at')
-                    ->label('Terakhir Diupdate')
-                    ->dateTime()
                     ->sortable(),
                 IconColumn::make('deleted_at')
                     ->label('Status Data')
@@ -140,37 +163,26 @@ class FixedItemInstanceResource extends Resource
                     ->falseColor('success')
                     ->trueIcon('heroicon-o-trash')
                     ->falseIcon('heroicon-o-check-circle')
-                    ->tooltip(fn(FixedItemInstance $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
+                    ->tooltip(fn(InventoryItem $record) => $record->deleted_at ? 'Dihapus' : 'Aktif')
                     ->alignCenter(),
             ])
             ->headerActions([
                 CreateAction::make()->label('Tambah Barang'),
             ])
             ->filters([
-                SelectFilter::make('area')
-                    ->label('Filter Area')
-                    ->options(fn() => Area::pluck('name', 'id'))
-                    ->query(function (Builder $query, array $data) {
-                        if (!empty($data['value'])) {
-                            $query->whereHas('location', fn($q) => $q->where('area_id', $data['value']));
-                        }
-                    })
-                    ->searchable()
-                    ->preload()
-                    ->optionsLimit(5),
-                SelectFilter::make('location')
-                    ->relationship('location', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->optionsLimit(5),
+                SelectFilter::make('status')
+                    ->options(InventoryStatus::class),
                 SelectFilter::make('item_id')
                     ->label('Nama Barang')
-                    ->options(fn() => Item::where('type', ItemType::Fixed)->pluck('name', 'id'))
+                    ->relationship('item', 'name')
+                    ->searchable()
+                    ->preload(),
+                SelectFilter::make('area')
+                    ->label('Area')
+                    ->relationship('location.area', 'name')
                     ->searchable()
                     ->preload()
-                    ->optionsLimit(5),
-                SelectFilter::make('status')
-                    ->options(FixedItemStatus::class),
+                    ->multiple(),
                 TrashedFilter::make()
                     ->label('Status Data')
                     ->placeholder('Hanya data aktif')
@@ -179,49 +191,34 @@ class FixedItemInstanceResource extends Resource
             ])
             ->recordActions([
                 ActionGroup::make([
-                    ViewAction::make(),
                     EditAction::make(),
                     DeleteAction::make()
-                        ->action(function (FixedItemInstance $record) {
+                        ->action(function (InventoryItem $record) {
                             try {
                                 $record->delete();
-                                Notification::make()->success()->title('Aset berhasil dihapus')->send();
+                                Notification::make()->success()->title('Data berhasil dihapus')->send();
                             } catch (ValidationException $e) {
                                 Notification::make()
                                     ->danger()
                                     ->title('Gagal Menghapus')
                                     ->body($e->validator->errors()->first())
                                     ->send();
-                            } catch (\Exception $e) {
-                                Notification::make()
-                                    ->danger()
-                                    ->title('Terjadi Kesalahan')
-                                    ->body($e->getMessage())
-                                    ->send();
                             }
                         }),
                     ForceDeleteAction::make(),
                     RestoreAction::make(),
-                ])->dropdownPlacement('left-start'),
+                ]),
             ])
             ->toolbarActions([
                 //
-            ])
-            ->striped();
+            ]);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ManageFixedItemInstances::route('/'),
+            'index' => ManageInventoryItems::route('/'),
         ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->with(['item', 'location.area'])
-            ->withTrashed();
     }
 
     public static function getRecordRouteBindingEloquentQuery(): Builder

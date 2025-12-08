@@ -2,21 +2,25 @@
 
 namespace App\Enums;
 
-use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasLabel;
+use Filament\Support\Contracts\HasColor;
 
-enum FixedItemStatus: string implements HasLabel, HasColor
+enum InventoryStatus: string implements HasLabel, HasColor
 {
     case Available = 'available';
     case Borrowed = 'borrowed';
     case Maintenance = 'maintenance';
+    case Broken = 'broken';
+    case Lost = 'lost';
 
     public function getLabel(): ?string
     {
         return match ($this) {
             self::Available => 'Tersedia',
             self::Borrowed => 'Dipinjam',
-            self::Maintenance => 'Perawatan / Rusak',
+            self::Maintenance => 'Dalam Perbaikan',
+            self::Broken => 'Rusak',
+            self::Lost => 'Hilang',
         };
     }
 
@@ -24,8 +28,9 @@ enum FixedItemStatus: string implements HasLabel, HasColor
     {
         return match ($this) {
             self::Available => 'success',
-            self::Borrowed => 'warning',
-            self::Maintenance => 'danger',
+            self::Borrowed => 'info',
+            self::Maintenance => 'warning',
+            self::Broken, self::Lost => 'danger',
         };
     }
 }
