@@ -12,7 +12,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Widgets\FilamentInfoWidget;
 use Openplain\FilamentShadcnTheme\Color;
 use Filament\Http\Middleware\Authenticate;
-use App\Filament\Pages\CreateBorrowingPage;
 use App\Filament\Resources\Areas\AreaResource;
 use App\Filament\Resources\Items\ItemResource;
 use Illuminate\Session\Middleware\StartSession;
