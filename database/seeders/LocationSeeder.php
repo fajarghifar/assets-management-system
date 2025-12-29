@@ -16,22 +16,24 @@ class LocationSeeder extends Seeder
             LocationSite::BT,
         ];
 
+        $roomName = 'Ruang IT';
+        $codeSuffix = 'RIT';
+
         foreach ($targetSites as $site) {
-            $name = 'Ruang IT';
-            $code = "{$site->value}-{$name}";
+            $manualCode = "{$site->value}-{$codeSuffix}";
 
             Location::firstOrCreate(
                 [
                     'site' => $site->value,
-                    'name' => $name,
+                    'name' => $roomName,
                 ],
                 [
-                    'code' => $code,
+                    'code' => $manualCode,
                     'description' => "Pusat server dan operasional IT Staff di area {$site->getLabel()}.",
                 ]
             );
 
-            $this->command->info("✅ Lokasi '{$name}' ({$code}) berhasil dibuat di {$site->value}");
+            $this->command->info("✅ Lokasi dibuat: {$roomName} ({$manualCode}) di {$site->value}");
         }
     }
 }

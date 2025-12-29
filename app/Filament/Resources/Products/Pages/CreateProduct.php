@@ -1,15 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\Items\Pages;
+namespace App\Filament\Resources\Products\Pages;
 
 use Filament\Actions\Action;
-use Filament\Actions\EditAction;
-use Filament\Resources\Pages\ViewRecord;
-use App\Filament\Resources\Items\ItemResource;
+use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Resources\Products\ProductResource;
 
-class ViewItem extends ViewRecord
+class CreateProduct extends CreateRecord
 {
-    protected static string $resource = ItemResource::class;
+    protected static string $resource = ProductResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -19,8 +18,6 @@ class ViewItem extends ViewRecord
                 ->icon('heroicon-m-arrow-left')
                 ->url($this->getResource()::getUrl('index'))
                 ->color('gray'),
-
-            EditAction::make(),
         ];
     }
 }

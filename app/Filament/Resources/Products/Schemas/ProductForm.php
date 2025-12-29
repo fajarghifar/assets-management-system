@@ -1,0 +1,66 @@
+<?php
+
+namespace App\Filament\Resources\Products\Schemas;
+
+use App\Enums\ProductType;
+use Filament\Schemas\Schema;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Section;
+
+class ProductForm
+{
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Section::make('Informasi Produk')
+                    ->schema([
+                        TextInput::make('code')
+                            ->label('Kode')
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(20)
+                            ->placeholder('Contoh: HDD500, SSD128')
+                            ->helperText('Kode ini akan menjadi prefix untuk aset turunan (Ex: LPT01-xxxxx).')
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(fn($state, callable $set) => $set('code', strtoupper($state)))
+                            ->disabled(fn($operation) => $operation === 'edit')
+                            ->dehydrated(),
+                        TextInput::make('name')
+                            ->label('Nama Barang')
+                            ->required()
+                            ->maxLength(100),
+                        Select::make('category_id')
+                            ->label('Kategori')
+                            ->relationship('category', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->optionsLimit(20)
+                            ->required(),
+                        Select::make('type')
+                            ->label('Jenis Barang')
+                            ->options(ProductType::class)
+                            ->required()
+                            ->native(false)
+                            ->disabled(fn($operation) => $operation === 'edit')
+                            ->dehydrated(),
+                        Toggle::make('can_be_loaned')
+                            ->label('Bisa Dipinjam?')
+                            ->onColor('success')
+                            ->offColor('danger')
+                            ->default(true)
+                            ->helperText('Aktifkan untuk barang yang boleh dibawa pulang/dipinjam user.')
+                            ->columnSpanFull(),
+                        Textarea::make('description')
+                            ->label('Deskripsi')
+                            ->rows(2)
+                            ->columnSpanFull(),
+                ])
+                ->columns(2)
+                ->columnSpanFull(),
+            ]);
+    }
+}

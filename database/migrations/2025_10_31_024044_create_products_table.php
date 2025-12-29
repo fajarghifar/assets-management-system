@@ -11,18 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('items', function (Blueprint $table) {
+        Schema::create('products', function (Blueprint $table) {
             $table->id();
-            $table->string('code', 20)->unique();
             $table->string('name');
-            $table->string('type');
+            $table->string('code')->unique();
+            $table->string('type')->index();
+            $table->foreignId('category_id')->constrained()->restrictOnDelete();
+            $table->boolean('can_be_loaned')->default(true)->index();
             $table->text('description')->nullable();
-            $table->softDeletes();
             $table->timestamps();
-
-            // Indexes
-            $table->index('name');
-            $table->index('type');
         });
     }
 
@@ -31,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('items');
+        Schema::dropIfExists('products');
     }
 };
