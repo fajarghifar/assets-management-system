@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products;
 
+use UnitEnum;
 use App\Models\Product;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
@@ -16,7 +17,10 @@ use App\Filament\Resources\Products\Tables\ProductsTable;
 class ProductResource extends Resource
 {
     protected static ?string $model = Product::class;
-    protected static bool $shouldRegisterNavigation = false;
+    protected static string|UnitEnum|null $navigationGroup = 'Inventaris';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Master Barang';
+    protected static ?string $pluralModelLabel = 'Master Barang';
 
     public static function form(Schema $schema): Schema
     {

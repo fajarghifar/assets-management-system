@@ -42,7 +42,7 @@ class AssetsTable
                     ->color('primary')
                     ->weight('medium'),
                 TextColumn::make('product.name')
-                    ->label('Produk')
+                    ->label('Barang')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('serial_number')

@@ -21,7 +21,7 @@ class AssetForm
                 Section::make('Informasi Aset')
                     ->schema([
                         Select::make('product_id')
-                            ->label('Produk (Master)')
+                            ->label('Barang (Master)')
                             ->relationship('product', 'name', fn ($query) => $query->where('type', ProductType::Asset))
                             ->searchable()
                             ->preload()

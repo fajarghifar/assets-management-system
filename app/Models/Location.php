@@ -3,12 +3,9 @@
 namespace App\Models;
 
 use App\Enums\LocationSite;
-use App\Observers\LocationObserver;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 
-// #[ObservedBy(LocationObserver::class)]
 class Location extends Model
 {
     use HasFactory;
@@ -23,4 +20,9 @@ class Location extends Model
     protected $casts = [
         'site' => LocationSite::class,
     ];
+
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->site->value} - {$this->name}";
+    }
 }

@@ -41,7 +41,7 @@ class Login extends BaseAuth
     protected function throwFailureValidationException(): never
     {
         throw ValidationException::withMessages([
-            'data.username' => __('filament-panels::pages/auth/login.messages.failed'),
+            'data.username' => __('auth.failed'),
         ]);
     }
 }

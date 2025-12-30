@@ -23,6 +23,7 @@ class ProductForm
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(20)
+                            ->regex('/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/')
                             ->placeholder('Contoh: HDD500, SSD128')
                             ->helperText('Kode ini akan menjadi prefix untuk aset turunan (Ex: LPT01-xxxxx).')
                             ->live(onBlur: true)

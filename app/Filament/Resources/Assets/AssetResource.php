@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Assets;
 
+use UnitEnum;
 use App\Models\Asset;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;
@@ -17,7 +18,10 @@ use App\Filament\Resources\Assets\RelationManagers\HistoriesRelationManager;
 class AssetResource extends Resource
 {
     protected static ?string $model = Asset::class;
-    protected static bool $shouldRegisterNavigation = false;
+    protected static string|UnitEnum|null $navigationGroup = 'Inventaris';
+    protected static ?int $navigationSort = 2;
+    protected static ?string $navigationLabel = 'Daftar Aset';
+    protected static ?string $pluralModelLabel = 'Daftar Aset';
 
     public static function form(Schema $schema): Schema
     {

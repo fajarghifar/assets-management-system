@@ -15,8 +15,8 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Ambil ID Kategori Baru [slug => id]
-        $categories = Category::pluck('id', 'slug');
+        // Get Category IDs
+        $categories = Category::all()->pluck('id', 'slug')->mapWithKeys(fn($item, $key) => [strtolower($key) => $item]);
 
         if ($categories->isEmpty()) {
             throw new \Exception("❌ ERROR: Kategori kosong. Jalankan CategorySeeder dulu!");
@@ -25,7 +25,7 @@ class ProductSeeder extends Seeder
         $getCatId = fn($slug) => $categories[$slug]
             ?? throw new \Exception("❌ ERROR: Slug '$slug' tidak ditemukan.");
 
-        // Mapping ID Kategori Baru
+        // Map Category IDs
         $catIds = [
             'TOOLS' => $getCatId('perkakas-peralatan'),
             'TEST' => $getCatId('alat-ukur-pengujian'),
@@ -37,11 +37,9 @@ class ProductSeeder extends Seeder
         ];
 
         DB::transaction(function () use ($catIds) {
-            // ==========================================
-            // A. SEED ASSETS (Barang Tetap/Unit)
-            // ==========================================
+            // Seed Assets
 
-            // 1. Kategori: TOOLS & EQUIPMENT
+            // Tools
             $this->seedBatch([
                 'TANGPT' => 'Tang Potong',
                 'TANGLC' => 'Tang Lancip',
@@ -65,7 +63,7 @@ class ProductSeeder extends Seeder
                 'SUNTIK' => 'Suntikan Besar (Refill)',
             ], ProductType::Asset, $catIds['TOOLS'], true);
 
-            // 2. Kategori: TESTING INSTRUMENTS
+            // Testing
             $this->seedBatch([
                 'LANTST' => 'LAN Tester',
                 'MULTI'  => 'Multi Meter Digital',
@@ -74,19 +72,19 @@ class ProductSeeder extends Seeder
                 'WTRPAS' => 'Waterpass',
             ], ProductType::Asset, $catIds['TEST'], true);
 
-            // 3. Kategori: NETWORK INFRASTRUCTURE (Hardware)
+            // Network (Hardware)
             $this->seedBatch([
                 'HT'     => 'Handy Talky (HT)',
                 'IPPHON' => 'Fanvil (IP Phone)',
                 'POE'    => 'POE Injector',
             ], ProductType::Asset, $catIds['NET'], true);
 
-            // 4. Kategori: POWER SYSTEMS
+            // Power Systems
             $this->seedBatch([
                 'UPS' => 'UPS 600VA',
             ], ProductType::Asset, $catIds['POWR'], false);
 
-            // 5. Kategori: COMPUTER COMPONENTS (Storage/Part Bernilai)
+            // Components
             $this->seedBatch([
                 'WD500'  => 'Harddisk WD 500GB',
                 'SGT500' => 'Harddisk Seagate 500GB',
@@ -97,7 +95,7 @@ class ProductSeeder extends Seeder
                 'MOBO'   => 'Motherboard PC',
             ], ProductType::Asset, $catIds['COMP'], false);
 
-            // 6. Kategori: PERIPHERALS & ACCESSORIES
+            // Peripherals
             $this->seedBatch([
                 'STB'    => 'STB (Set Top Box)',
                 'HDDEXT' => 'Harddisk External',
@@ -108,11 +106,9 @@ class ProductSeeder extends Seeder
             ], ProductType::Asset, $catIds['PERI'], true);
 
 
-            // ==========================================
-            // B. SEED CONSUMABLES (Barang Habis Pakai)
-            // ==========================================
+            // Seed Consumables
 
-            // 1. Masuk ke NETWORK (Konektor & Kabel)
+            // Network (Consumables)
             $this->seedBatch([
                 'RJ45'   => 'Konektor RJ45',
                 'RJ11'   => 'Konektor RJ11',
@@ -120,7 +116,7 @@ class ProductSeeder extends Seeder
                 'RG4'    => 'Kabel RG4 / Coaxial',
             ], ProductType::Consumable, $catIds['NET'], true);
 
-            // 2. Masuk ke MAINTENANCE SUPPLIES (Bahan & Sparepart Kecil)
+            // Maintanance
             $this->seedBatch([
                 'CLKIT'  => 'Cleaning Kit',
                 'PASTA'  => 'Pasta Processor (Thermal Paste)',

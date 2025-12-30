@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\Locations;
 
-use BackedEnum;
+use UnitEnum;
 use App\Models\Location;
 use Filament\Tables\Table;
 use App\Enums\LocationSite;
@@ -25,8 +25,10 @@ use App\Filament\Resources\Locations\Pages\ManageLocations;
 class LocationResource extends Resource
 {
     protected static ?string $model = Location::class;
-    protected static ?string $navigationLabel = 'Lokasi';
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
+    protected static string|UnitEnum|null $navigationGroup = 'Lokasi';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Daftar Lokasi';
+    protected static ?string $pluralModelLabel = 'Daftar Lokasi';
 
     public static function form(Schema $schema): Schema
     {
@@ -42,7 +44,8 @@ class LocationResource extends Resource
                     ->label('Kode Lokasi')
                     ->required()
                     ->maxLength(100)
-                    ->placeholder('Contoh: BT-IT, JMP2-IT, BT-OFF4'),
+                    ->unique(ignoreRecord: true)
+                    ->placeholder('Contoh: BT-IT, JMP2-IT'),
                 TextInput::make('name')
                     ->label('Nama Lokasi')
                     ->required()
@@ -65,7 +68,7 @@ class LocationResource extends Resource
                     ->label('#')
                     ->rowIndex(),
                 TextColumn::make('code')
-                    ->label('Kode')
+                    ->label('Kode Lokasi')
                     ->searchable()
                     ->copyable()
                     ->weight('medium')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Categories;
 
+use UnitEnum;
 use App\Models\Category;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
@@ -10,6 +11,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Resource;
 use Filament\Actions\ActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Textarea;
 use Filament\Tables\Columns\TextColumn;
@@ -22,7 +24,10 @@ use App\Filament\Resources\Categories\Pages\ManageCategories;
 class CategoryResource extends Resource
 {
     protected static ?string $model = Category::class;
-    protected static bool $shouldRegisterNavigation = false;
+    protected static string|UnitEnum|null $navigationGroup = 'Pengaturan';
+    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationLabel = 'Kategori Barang';
+    protected static ?string $pluralModelLabel = 'Kategori Barang';
 
     public static function form(Schema $schema): Schema
     {
@@ -33,10 +38,11 @@ class CategoryResource extends Resource
                     ->required()
                     ->maxLength(100)
                     ->live(onBlur: true)
-                    ->afterStateUpdated(function ($state, callable $set, $operation) {
-                        if ($operation === 'create') {
-                            $set('slug', Str::slug($state));
+                    ->afterStateUpdated(function (Get $get, Set $set, ?string $old, ?string $state) {
+                        if (($get('slug') ?? '') !== Str::slug($old ?? '')) {
+                            return;
                         }
+                        $set('slug', Str::slug($state));
                     }),
                 TextInput::make('slug')
                     ->label('Slug URL')
@@ -55,7 +61,7 @@ class CategoryResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->heading('Kategori Produk')
+            ->heading('Kategori Barang')
             ->modifyQueryUsing(fn(Builder $query) => $query->withCount('products'))
             ->columns([
                 TextColumn::make('rowIndex')
@@ -70,11 +76,14 @@ class CategoryResource extends Resource
                     ->color('gray')
                     ->fontFamily('mono'),
                 TextColumn::make('products_count')
-                    ->label('Total Produk')
+                    ->label('Total Barang')
                     ->sortable()
                     ->badge()
                     ->color(fn($state) => $state > 0 ? 'info' : 'gray')
                     ->alignCenter(),
+            ])
+            ->headerActions([
+                CreateAction::make()->label('Tambah Kategori'),
             ])
             ->filters([
                 //

@@ -72,37 +72,14 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Inventaris')
                     ->icon('heroicon-o-archive-box')
                     ->collapsible(),
-            ])
-            ->navigationItems([
-                NavigationItem::make('Master Barang')
-                    ->url(fn(): string => ProductResource::getUrl('index'))
-                    ->group('Inventaris')
-                    ->sort(1)
-                    ->isActiveWhen(fn() => request()->routeIs(ProductResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Daftar Aset')
-                    ->url(fn(): string => AssetResource::getUrl('index'))
-                    ->group('Inventaris')
-                    ->sort(2)
-                    ->isActiveWhen(fn() => request()->routeIs(AssetResource::getRouteBaseName() . '*')),
-                NavigationItem::make('Kategori Barang')
-                    ->url(fn(): string => CategoryResource::getUrl('index'))
-                    ->group('Inventaris')
-                    ->sort(3)
-                    ->isActiveWhen(fn() => request()->routeIs(CategoryResource::getRouteBaseName() . '*')),
-                // NavigationItem::make('Daftar Aset Inventaris')
-                //     ->url(fn(): string => InventoryItemResource::getUrl('index'))
-                //     ->group('Inventaris')
-                //     ->sort(2)
-                //     ->isActiveWhen(fn() => request()->routeIs(InventoryItemResource::getRouteBaseName() . '*')),
-                // NavigationItem::make('Daftar Aset Terpasang')
-                //     ->url(fn(): string => InstalledItemResource::getUrl('index'))
-                //     ->group('Inventaris')
-                //     ->sort(4)
-                //     ->isActiveWhen(fn() => request()->routeIs(InstalledItemResource::getRouteBaseName() . '*')),
-                // NavigationItem::make('Peminjaman')
-                //     ->url(fn(): string => BorrowingResource::getUrl('index'))
-                //     ->icon('heroicon-o-inbox-arrow-down')
-                //     ->isActiveWhen(fn() => request()->routeIs(BorrowingResource::getRouteBaseName() . '*')),
+                NavigationGroup::make()
+                    ->label('Lokasi')
+                    ->icon('heroicon-o-map')
+                    ->collapsible(),
+                NavigationGroup::make()
+                    ->label('Pengaturan')
+                    ->icon('heroicon-o-cog-6-tooth')
+                    ->collapsible(),
             ])
             ->breadcrumbs(false);
     }
