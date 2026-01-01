@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Filament\Resources\Borrowings\Schemas;
+namespace App\Filament\Resources\Loans\Schemas;
 
+use App\Enums\ProductType;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
@@ -10,81 +11,99 @@ use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\RepeatableEntry;
 use Filament\Infolists\Components\RepeatableEntry\TableColumn;
 
-class BorrowingInfolist
+
+class LoanInfolist
 {
+    /**
+     * Configure the info list implementation for viewing Loan details.
+     */
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
                 Section::make('Informasi Peminjaman')
                     ->schema([
-                        Grid::make()
-                            ->columns(3)
+                        Grid::make(3)
                             ->schema([
                                 TextEntry::make('code')
                                     ->label('Kode Peminjaman')
-                                    ->weight('bold')
-                                    ->copyable()
-                                    ->icon('heroicon-o-hashtag')
                                     ->weight('medium')
-                                    ->color('primary'),
-                                TextEntry::make('borrower_name')
-                                    ->label('Peminjam')
-                                    ->icon('heroicon-o-user'),
+                                    ->copyable()
+                                    ->color('primary')
+                                    ->icon('heroicon-o-hashtag'),
+
                                 TextEntry::make('status')
                                     ->label('Status')
-                                    ->badge(),
-                                TextEntry::make('borrow_date')
+                                    ->badge()
+                                    ->columnSpan(2),
+
+                                TextEntry::make('loan_date')
                                     ->label('Tanggal Pinjam')
                                     ->dateTime('d M Y H:i')
                                     ->icon('heroicon-o-calendar-days'),
-                                TextEntry::make('expected_return_date')
-                                    ->label('Wajib Kembali')
+
+                                TextEntry::make('due_date')
+                                    ->label('Tenggat Pengembalian')
                                     ->dateTime('d M Y H:i')
                                     ->icon('heroicon-o-calendar'),
-                                TextEntry::make('actual_return_date')
-                                    ->label('Aktual Kembali')
+
+                                TextEntry::make('returned_date')
+                                    ->label('Tanggal Kembali')
                                     ->dateTime('d M Y H:i')
                                     ->icon('heroicon-o-check-circle')
                                     ->placeholder('-'),
-                        ]),
+
+                                TextEntry::make('user.name')
+                                    ->label('PIC (Admin)')
+                                    ->icon('heroicon-o-user-circle'),
+
+                                TextEntry::make('borrower_name')
+                                    ->label('Peminjam')
+                                    ->icon('heroicon-o-user'),
+                            ]),
+
                         ImageEntry::make('proof_image')
                             ->label('Bukti Peminjaman')
                             ->disk('public')
                             ->visible(fn($record) => !empty($record->proof_image))
                             ->columnSpanFull(),
+
                         TextEntry::make('purpose')
-                            ->label('Tujuan Peminjaman')
+                            ->label('Keperluan')
                             ->columnSpanFull(),
+
                         TextEntry::make('notes')
                             ->label('Catatan')
                             ->placeholder('-')
                             ->columnSpanFull(),
 
-                        RepeatableEntry::make('items')
-                            ->hiddenLabel()
+                        // --- List of Loan Items ---
+                        RepeatableEntry::make('loanItems')
+                            ->label('Daftar Barang')
                             ->table([
-                                TableColumn::make('Barang')->width('30%'),
-                                TableColumn::make('Tipe'),
+                                TableColumn::make('Barang'),
+                                TableColumn::make('Lokasi'),
                                 TableColumn::make('Jml. Pinjam')->alignRight(),
                                 TableColumn::make('Jml. Kembali')->alignRight(),
                             ])
                             ->schema([
-                                TextEntry::make('inventoryItem.item.name')
-                                    ->weight('medium'),
-                                TextEntry::make('inventoryItem.item.type')
-                                    ->badge(),
-                                TextEntry::make('quantity')
-                                    ->suffix(' Unit')
+                                TextEntry::make('product_name'),
+
+                                // Uses Accessor from LoanItem
+                                TextEntry::make('location_name')
+                                    ->label('Lokasi')
+                                    ->state(fn($record) => $record->location_name),
+
+                                TextEntry::make('quantity_borrowed')
                                     ->alignRight(),
-                                TextEntry::make('returned_quantity')
-                                    ->suffix(' Unit')
-                                    ->alignRight(),
+
+                                TextEntry::make('quantity_returned')
+                                    ->alignRight()
+                                    ->color(fn($record) => $record->quantity_returned >= $record->quantity_borrowed ? 'success' : 'warning'),
                             ])
                             ->columnSpanFull()
                     ])
-                    ->columns(2)
-                    ->columnSpanFull(),
+                    ->columnSpanFull()
             ]);
     }
 }

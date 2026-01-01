@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Filament\Resources\Borrowings\Pages;
+namespace App\Filament\Resources\Loans\Pages;
 
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
-use App\Filament\Resources\Borrowings\BorrowingResource;
-use App\Filament\Resources\Borrowings\BorrowingActionsTrait;
+use App\Filament\Resources\Loans\LoanResource;
+use App\Filament\Resources\Loans\Traits\LoanActionsTrait;
 
-class EditBorrowing extends EditRecord
+class EditLoan extends EditRecord
 {
-    use BorrowingActionsTrait;
+    use LoanActionsTrait;
 
-    protected static string $resource = BorrowingResource::class;
+    protected static string $resource = LoanResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -25,7 +25,7 @@ class EditBorrowing extends EditRecord
                     ->icon('heroicon-m-arrow-left'),
                 ViewAction::make(),
             ],
-            $this->getBorrowingHeaderActions($this->getRecord())
+            $this->getLoanHeaderActions($this->getRecord())
         );
     }
 }
