@@ -37,7 +37,7 @@ class AssetsTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('#')
+                    ->label(__('resources.general.fields.row_index'))
                     ->rowIndex(),
 
                 TextColumn::make('asset_tag')
@@ -59,7 +59,7 @@ class AssetsTable
                     ->placeholder('-'),
 
                 TextColumn::make('location.site')
-                    ->label('Site')
+                    ->label(__('resources.assets.fields.site'))
                     ->badge()
                     ->searchable()
                     ->sortable(),
@@ -80,7 +80,7 @@ class AssetsTable
             ])
             ->headerActions([
                 ExcelImportAction::make()
-                    ->label('Import Aset')
+                    ->label(__('resources.assets.actions.import'))
                     ->color('gray')
                     ->icon('heroicon-o-arrow-up-tray')
                     ->use(\App\Imports\AssetImport::class)
@@ -116,20 +116,20 @@ class AssetsTable
                             ],
                         ],
                         fileName: 'template_import_aset.xlsx',
-                        sampleButtonLabel: 'Download Template',
+                        sampleButtonLabel: __('resources.assets.actions.download_template'),
                         customiseActionUsing: fn($action) => $action
                             ->color('info')
                             ->icon('heroicon-o-document-arrow-down')
                     ),
 
                 FilamentExportHeaderAction::make('export')
-                    ->label('Export Aset')
+                    ->label(__('resources.assets.actions.export'))
                     ->color('gray')
                     ->defaultPageOrientation('landscape')
                     ->fileName('Data_Aset_' . date('Y-m-d'))
                     ->defaultFormat('xlsx'),
 
-                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Aset'), // Need to add general create? Leaving fallback
+                CreateAction::make()->label(__('resources.general.actions.create')),
             ])
             ->filters([
                 SelectFilter::make('status')
@@ -141,7 +141,7 @@ class AssetsTable
                 Filter::make('filter_location')
                     ->form([
                         Select::make('site')
-                            ->label('Site / Gedung')
+                            ->label(__('resources.assets.fields.site'))
                             ->options(LocationSite::class)
                             ->searchable()
                             ->multiple()
@@ -149,7 +149,7 @@ class AssetsTable
                             ->live(),
 
                         Select::make('location_id')
-                            ->label('Area / Ruangan')
+                            ->label(__('resources.assets.fields.area'))
                             ->searchable()
                             ->multiple()
                             ->native(false)
@@ -181,14 +181,14 @@ class AssetsTable
                                 ->searchable()
                                 ->required(),
                             Textarea::make('notes')
-                                ->label(__('resources.assets.fields.notes'))
+                                ->label(__('resources.assets.fields.move_reason'))
                                 ->required(),
                         ])
                         ->action(function (Asset $record, array $data, AssetService $service) {
                             $service->move($record, $data['location_id'], $data['notes']);
                             Notification::make()
                                 ->success()
-                                ->title('Lokasi Berhasil Dipindah')
+                                ->title(__('resources.assets.notifications.move_success'))
                                 ->send();
                         }),
 
@@ -201,18 +201,18 @@ class AssetsTable
                         ->form([
                             TextInput::make('recipient_name')
                                 ->label(__('resources.assets.fields.recipient_name'))
-                                ->placeholder('Contoh: IT - Dimas atau Vendor CCTV')
+                                ->placeholder(__('resources.assets.fields.recipient_placeholder'))
                                 ->required()
                                 ->maxLength(255),
                             Textarea::make('notes')
-                                ->label(__('resources.assets.fields.notes'))
+                                ->label(__('resources.assets.fields.purpose'))
                                 ->required(),
                         ])
                         ->action(function (Asset $record, array $data, AssetService $service) {
                             $service->checkOut($record, $data['recipient_name'], $data['notes']);
                             Notification::make()
                                 ->success()
-                                ->title('Aset diserahkan ke: ' . $data['recipient_name'])
+                                ->title(__('resources.assets.notifications.check_out_success', ['name' => $data['recipient_name']]))
                                 ->send();
                         }),
 
@@ -224,38 +224,40 @@ class AssetsTable
                         ->visible(fn (Asset $record) => $record->status === AssetStatus::Loaned)
                         ->form([
                             Select::make('location_id')
-                                ->label('Kembali ke Lokasi')
+                                ->label(__('resources.assets.fields.return_location'))
                                 ->options(Location::pluck('name', 'id'))
                                 ->default(fn(Asset $record) => $record->location_id)
                                 ->required(),
                             Textarea::make('notes')
-                                ->label('Kondisi Pengembalian')
+                                ->label(__('resources.assets.fields.return_condition'))
                                 ->required(),
                         ])
                         ->action(function (Asset $record, array $data, AssetService $service) {
                             $service->checkIn($record, $data['location_id'], $data['notes']);
                             Notification::make()
                                 ->success()
-                                ->title('Aset Dikembalikan')
+                                ->title(__('resources.assets.notifications.check_in_success'))
                                 ->send();
                         }),
 
                     DeleteAction::make()
-                        ->modalDescription('Apakah Anda yakin ingin menghapus aset ini secara permanen?')
+                        ->modalDescription(__('resources.assets.notifications.delete_confirm'))
                         ->action(function (Asset $record) {
                             try {
                                 $record->delete();
-                                Notification::make()->success()->title('Aset berhasil dihapus')->send();
+                                Notification::make()->success()
+                                    ->title(__('resources.assets.notifications.delete_success'))
+                                    ->send();
                             } catch (\Illuminate\Database\QueryException $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Gagal Menghapus')
-                                    ->body('Aset tidak bisa dihapus karena masih terikat data lain.')
+                                    ->title(__('resources.assets.notifications.delete_failed'))
+                                    ->body(__('resources.assets.notifications.delete_failed_body'))
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Error Sistem')
+                                    ->title(__('resources.assets.notifications.system_error'))
                                     ->body($e->getMessage())
                                     ->send();
                             }
@@ -264,7 +266,7 @@ class AssetsTable
             ])
             ->toolbarActions([
                 FilamentExportBulkAction::make('export')
-                    ->label('Export Selected')
+                    ->label(__('resources.assets.actions.export'))
                     ->icon('heroicon-o-arrow-down-tray')
             ]);
     }

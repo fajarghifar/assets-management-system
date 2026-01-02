@@ -97,7 +97,7 @@ class ConsumableStockResource extends Resource
             ->defaultSort('quantity', 'asc')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('#')
+                    ->label(__('resources.general.fields.row_index'))
                     ->rowIndex(),
 
                 TextColumn::make('product.name')
@@ -106,7 +106,7 @@ class ConsumableStockResource extends Resource
                     ->sortable(),
 
                 TextColumn::make('location.site')
-                    ->label('Site')
+                    ->label(__('resources.consumables.fields.site'))
                     ->badge()
                     ->searchable()
                     ->sortable(),
@@ -130,7 +130,7 @@ class ConsumableStockResource extends Resource
             ])
             ->headerActions([
                 ExcelImportAction::make()
-                    ->label('Import Stok')
+                    ->label(__('resources.consumables.actions.import'))
                     ->color('gray')
                     ->icon('heroicon-o-arrow-up-tray')
                     ->use(ConsumableStockImport::class)
@@ -157,38 +157,38 @@ class ConsumableStockResource extends Resource
                             ],
                         ],
                         fileName: 'template_import_stok.xlsx',
-                        sampleButtonLabel: 'Download Template',
+                        sampleButtonLabel: (__('resources.consumables.actions.download_template')),
                         customiseActionUsing: fn($action) => $action
                             ->color('info')
                             ->icon('heroicon-o-document-arrow-down')
                     ),
 
                 FilamentExportHeaderAction::make('export')
-                    ->label('Export Data')
+                    ->label(__('resources.consumables.actions.export'))
                     ->color('gray')
                     ->defaultPageOrientation('landscape')
                     ->fileName('Stok_Consumable_' . date('Y-m-d'))
                     ->defaultFormat('xlsx'),
 
-                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Stok Baru'),
+                CreateAction::make()->label(__('resources.general.actions.create')),
             ])
             ->filters([
                 SelectFilter::make('product')
-                    ->label('Barang')
+                    ->label(__('resources.consumables.fields.product'))
                     ->relationship('product', 'name', fn ($query) => $query->where('type', ProductType::Consumable))
                     ->searchable()
                     ->preload(),
                 Filter::make('filter_location')
                     ->form([
                         Select::make('site')
-                            ->label('Site / Gedung')
+                            ->label(__('resources.consumables.fields.site'))
                             ->options(LocationSite::class)
                             ->searchable()
                             ->multiple()
                             ->native(false)
                             ->live(),
                         Select::make('location_id')
-                            ->label('Area / Ruangan')
+                            ->label(__('resources.consumables.fields.location'))
                             ->searchable()
                             ->multiple()
                             ->native(false)
@@ -217,21 +217,24 @@ class ConsumableStockResource extends Resource
                 ActionGroup::make([
                     EditAction::make(),
                     DeleteAction::make()
-                        ->modalDescription('Apakah Anda yakin ingin menghapus data stok ini? Tindakan ini tidak dapat dibatalkan.')
+                        ->modalDescription(__('resources.consumables.notifications.delete_confirm'))
                         ->action(function (ConsumableStock $record) {
                             try {
                                 $record->delete();
-                                Notification::make()->success()->title('Data stok berhasil dihapus')->send();
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.consumables.notifications.delete_success'))
+                                    ->send();
                             } catch (QueryException $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Penghapusan Gagal')
-                                    ->body('Data stok ini tidak bisa dihapus karena sedang digunakan oleh data lain.')
+                                    ->title(__('resources.consumables.notifications.delete_failed'))
+                                    ->body(__('resources.consumables.notifications.delete_failed_body'))
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Error')
+                                    ->title(__('resources.consumables.notifications.system_error'))
                                     ->body($e->getMessage())
                                     ->send();
                             }
@@ -240,7 +243,7 @@ class ConsumableStockResource extends Resource
             ])
             ->toolbarActions([
                 FilamentExportBulkAction::make('export')
-                    ->label('Export Selected')
+                    ->label(__('resources.consumables.actions.export'))
                     ->icon('heroicon-o-arrow-down-tray')
             ]);
     }

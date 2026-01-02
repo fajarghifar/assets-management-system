@@ -61,12 +61,12 @@ class LocationResource extends Resource
                     ->required()
                     ->maxLength(100)
                     ->unique(ignoreRecord: true)
-                    ->placeholder('Contoh: BT-IT, JMP2-IT'),
+                    ->placeholder(__('resources.locations.fields.code_placeholder')),
                 TextInput::make('name')
                     ->label(__('resources.locations.fields.name'))
                     ->required()
                     ->maxLength(100)
-                    ->placeholder('Contoh: Ruang Meeting Utama')
+                    ->placeholder(__('resources.locations.fields.name_placeholder'))
                     ->columnSpanFull(),
                 Textarea::make('description')
                     ->label(__('resources.locations.fields.description'))
@@ -81,7 +81,7 @@ class LocationResource extends Resource
             ->heading(fn() => __('resources.locations.plural_label'))
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('#')
+                    ->label(__('resources.general.fields.row_index'))
                     ->rowIndex(),
                 TextColumn::make('code')
                     ->label(__('resources.locations.fields.code'))
@@ -104,7 +104,7 @@ class LocationResource extends Resource
                     ->tooltip(fn(TextColumn $column) => $column->getState()),
             ])
             ->headerActions([
-                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Lokasi'),
+                CreateAction::make()->label(__('resources.general.actions.create')),
             ])
             ->filters([
                 SelectFilter::make('site')
@@ -122,17 +122,20 @@ class LocationResource extends Resource
                         ->action(function (Location $record) {
                             try {
                                 $record->delete();
-                                Notification::make()->success()->title('Lokasi berhasil dihapus')->send();
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.locations.notifications.delete_success'))
+                                    ->send();
                             } catch (\Illuminate\Database\QueryException $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Gagal Menghapus')
-                                    ->body('Lokasi tidak bisa dihapus karena masih digunakan oleh Aset/Stok.')
+                                    ->title(__('resources.locations.notifications.delete_failed'))
+                                    ->body(__('resources.locations.notifications.delete_failed_body'))
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Error Sistem')
+                                    ->title(__('resources.locations.notifications.system_error'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

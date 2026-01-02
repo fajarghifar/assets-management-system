@@ -50,13 +50,13 @@ class AssetForm
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(50)
-                            ->placeholder('Ex: LPT-001'),
+                            ->placeholder(__('resources.assets.fields.asset_tag_placeholder')),
 
                         TextInput::make('serial_number')
                             ->label(__('resources.assets.fields.serial_number'))
                             ->unique(ignoreRecord: true)
                             ->maxLength(255)
-                            ->placeholder('SN Pabrik'),
+                            ->placeholder(__('resources.assets.fields.serial_number_placeholder')),
 
                         // Detail Pembelian
                         DatePicker::make('purchase_date')
@@ -73,7 +73,7 @@ class AssetForm
                         TextInput::make('supplier_name')
                             ->label(__('resources.assets.fields.supplier'))
                             ->maxLength(100)
-                            ->placeholder('Nama Toko / Vendor'),
+                            ->placeholder(__('resources.assets.fields.supplier_placeholder')),
 
                         TextInput::make('order_number')
                             ->label(__('resources.assets.fields.order_number'))
@@ -84,7 +84,7 @@ class AssetForm
                             ->label(__('resources.assets.fields.notes'))
                             ->rows(3)
                             ->columnSpanFull()
-                            ->placeholder('Kondisi fisik, kelengkapan, dll.'),
+                            ->placeholder(__('resources.assets.fields.notes_placeholder')),
                     ])
                     ->columns(2)
                     ->columnSpanFull(),

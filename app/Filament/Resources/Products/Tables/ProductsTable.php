@@ -32,7 +32,7 @@ class ProductsTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('#')
+                    ->label(__('resources.general.fields.row_index'))
                     ->rowIndex(),
 
                 TextColumn::make('code')
@@ -87,7 +87,7 @@ class ProductsTable
             ])
             ->headerActions([
                 ExcelImportAction::make()
-                    ->label('Import Excel')
+                    ->label(__('resources.products.actions.import'))
                     ->color('gray')
                     ->icon(icon: 'heroicon-o-arrow-up-tray')
                     ->use(ProductImport::class)
@@ -114,14 +114,14 @@ class ProductsTable
                             ],
                         ],
                         fileName: 'template_import_produk.xlsx',
-                        sampleButtonLabel: 'Download Template',
+                        sampleButtonLabel: (__('resources.products.actions.download_template')),
                         customiseActionUsing: fn($action) => $action
                             ->color('info')
                             ->icon('heroicon-o-document-arrow-down')
                     ),
 
                 FilamentExportHeaderAction::make('export')
-                    ->label('Export Data')
+                    ->label(__('resources.products.actions.export'))
                     ->color('gray')
                     ->defaultPageOrientation('landscape')
                     ->disableAdditionalColumns()
@@ -129,51 +129,51 @@ class ProductsTable
                     ->defaultFormat('xlsx')
                     ->disableAdditionalColumns(),
 
-                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Barang'),
+                CreateAction::make()->label(__('resources.general.actions.create')),
             ])
             ->filters([
                 SelectFilter::make('category_id')
-                    ->label('Kategori')
+                    ->label(__('resources.products.filters.category'))
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload()
                     ->multiple(),
 
                 SelectFilter::make('type')
-                    ->label('Jenis Barang')
+                    ->label(__('resources.products.filters.type'))
                     ->options(ProductType::class)
                     ->native(false),
 
                 TernaryFilter::make('can_be_loaned')
-                    ->label('Status Peminjaman')
+                    ->label(__('resources.products.filters.loan_status'))
                     ->native(false)
-                    ->placeholder('Semua')
-                    ->trueLabel('Bisa Dipinjam')
-                    ->falseLabel('Tidak Bisa Dipinjam'),
+                    ->placeholder(__('resources.products.filters.all'))
+                    ->trueLabel(__('resources.products.filters.loanable'))
+                    ->falseLabel(__('resources.products.filters.not_loanable')),
             ])
             ->recordActions([
                 ActionGroup::make([
                     EditAction::make(),
                     DeleteAction::make()
-                        ->modalHeading('Hapus Produk')
-                        ->modalDescription('Apakah Anda yakin? Data akan dihapus PERMANEN dan tidak dapat dikembalikan.')
+                        ->modalHeading(__('resources.products.notifications.delete_title'))
+                        ->modalDescription(__('resources.products.notifications.delete_confirm'))
                         ->action(function (Product $record) {
                             try {
                                 $record->delete();
                                 Notification::make()
                                     ->success()
-                                    ->title('Produk berhasil dihapus')
+                                    ->title(__('resources.products.notifications.delete_success'))
                                     ->send();
                             } catch (QueryException $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Gagal Menghapus')
-                                    ->body('Produk ini tidak bisa dihapus karena memiliki data terkait (Aset/Stok/Peminjaman).')
+                                    ->title(__('resources.products.notifications.delete_failed'))
+                                    ->body(__('resources.products.notifications.delete_failed_body'))
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Error Sistem')
+                                    ->title(__('resources.products.notifications.system_error'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

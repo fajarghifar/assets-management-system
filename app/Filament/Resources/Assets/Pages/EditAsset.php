@@ -24,7 +24,7 @@ class EditAsset extends EditRecord
     {
         return [
             Action::make('back')
-                ->label('Kembali')
+                ->label(__('resources.general.actions.back'))
                 ->icon('heroicon-m-arrow-left')
                 ->url($this->getResource()::getUrl('index'))
                 ->color('gray'),
@@ -32,95 +32,95 @@ class EditAsset extends EditRecord
             ActionGroup::make([
                 // PINDAH LOKASI (Move)
                 Action::make('move')
-                    ->label('Pindah Lokasi')
+                    ->label(__('resources.assets.actions.move'))
                     ->icon('heroicon-m-arrows-right-left')
                     ->color('gray')
                     ->form([
                         Select::make('location_id')
-                            ->label('Lokasi Baru')
+                            ->label(__('resources.assets.fields.new_location'))
                             ->options(fn() => Location::pluck('name', 'id'))
                             ->searchable()
                             ->required(),
                         Textarea::make('notes')
-                            ->label('Alasan Pindah')
+                            ->label(__('resources.assets.fields.move_reason'))
                             ->required(),
                     ])
                     ->action(function (Asset $record, array $data, AssetService $service) {
                         $service->move($record, $data['location_id'], $data['notes']);
                         Notification::make()
                             ->success()
-                            ->title('Lokasi Berhasil Dipindah')
+                            ->title(__('resources.assets.notifications.move_success'))
                             ->send();
                     }),
 
                 // PEMINJAMAN (Check-Out)
                 Action::make('check_out')
-                    ->label('Pinjamkan / Serahkan')
+                    ->label(__('resources.assets.actions.check_out'))
                     ->icon('heroicon-m-arrow-up-tray')
                     ->color('info')
                     ->visible(fn (Asset $record) => $record->status === AssetStatus::InStock)
                     ->form([
                         TextInput::make('recipient_name')
-                            ->label('Nama Peminjam / Penerima')
-                            ->placeholder('Contoh: IT - Dimas atau Vendor CCTV')
+                            ->label(__('resources.assets.fields.recipient_name'))
+                            ->placeholder(__('resources.assets.fields.recipient_placeholder'))
                             ->required()
                             ->maxLength(255),
                         Textarea::make('notes')
-                            ->label('Keperluan')
+                            ->label(__('resources.assets.fields.purpose'))
                             ->required(),
                     ])
                     ->action(function (Asset $record, array $data, AssetService $service) {
                         $service->checkOut($record, $data['recipient_name'], $data['notes']);
                         Notification::make()
                             ->success()
-                            ->title('Aset diserahkan ke: ' . $data['recipient_name'])
+                            ->title(__('resources.assets.notifications.check_out_success', ['name' => $data['recipient_name']]))
                             ->send();
                     }),
 
                 // PENGEMBALIAN (Check-In)
                 Action::make('check_in')
-                    ->label('Kembalikan (Check-In)')
+                    ->label(__('resources.assets.actions.check_in'))
                     ->icon('heroicon-m-arrow-down-tray')
                     ->color('success')
                     ->visible(fn (Asset $record) => $record->status === AssetStatus::Loaned)
                     ->form([
                         Select::make('location_id')
-                            ->label('Kembali ke Lokasi')
+                            ->label(__('resources.assets.fields.return_location'))
                             ->options(fn() => Location::pluck('name', 'id'))
                             ->default(fn(Asset $record) => $record->location_id)
                             ->required(),
                         Textarea::make('notes')
-                            ->label('Kondisi Pengembalian')
+                            ->label(__('resources.assets.fields.return_condition'))
                             ->required(),
                     ])
                     ->action(function (Asset $record, array $data, AssetService $service) {
                         $service->checkIn($record, $data['location_id'], $data['notes']);
                         Notification::make()
                             ->success()
-                            ->title('Aset Dikembalikan')
+                            ->title(__('resources.assets.notifications.check_in_success'))
                             ->send();
                     }),
 
                 DeleteAction::make()
-                    ->modalDescription('Apakah Anda yakin ingin menghapus aset ini secara permanen?')
+                    ->modalDescription(__('resources.assets.notifications.delete_confirm'))
                     ->action(function (Asset $record) {
                         try {
                             $record->delete();
                             Notification::make()
                                 ->success()
-                                ->title('Aset berhasil dihapus')
+                                ->title(__('resources.assets.notifications.delete_success'))
                                 ->send();
                             return redirect($this->getResource()::getUrl('index'));
                         } catch (\Illuminate\Database\QueryException $e) {
                             Notification::make()
                                 ->danger()
-                                ->title('Gagal Menghapus')
-                                ->body('Aset tidak bisa dihapus karena masih terikat data lain.')
+                                ->title(__('resources.assets.notifications.delete_failed'))
+                                ->body(__('resources.assets.notifications.delete_failed_body'))
                                 ->send();
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->danger()
-                                ->title('Error Sistem')
+                                ->title(__('resources.assets.notifications.system_error'))
                                 ->body($e->getMessage())
                                     ->send();
                         }

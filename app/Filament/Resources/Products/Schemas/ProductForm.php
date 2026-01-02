@@ -28,8 +28,8 @@ class ProductForm
                             ->unique(ignoreRecord: true)
                             ->maxLength(20)
                             ->regex('/^[A-Z0-9]+(?:-[A-Z0-9]+)*$/')
-                            ->placeholder('Contoh: HDD500, SSD128')
-                            ->helperText('Kode ini digunakan sebagai awalan untuk aset turunan (Contoh: LPT01-xxxxx).')
+                            ->placeholder(__('resources.products.fields.code_placeholder'))
+                            ->helperText(__('resources.products.fields.code_helper'))
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn($state, callable $set) => $set('code', strtoupper($state)))
                             ->disabled(fn($operation) => $operation === 'edit')
@@ -63,7 +63,7 @@ class ProductForm
                             ->onColor('success')
                             ->offColor('danger')
                             ->default(true)
-                            ->helperText('Aktifkan jika barang ini diizinkan untuk dipinjam oleh karyawan.')
+                            ->helperText(__('resources.products.fields.loanable_helper'))
                             ->columnSpanFull(),
 
                         Textarea::make('description')

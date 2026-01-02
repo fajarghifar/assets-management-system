@@ -67,7 +67,7 @@ class CategoryResource extends Resource
                     ->unique(ignoreRecord: true)
                     ->maxLength(100)
                     ->regex('/^[a-z0-9]+(?:-[a-z0-9]+)*$/')
-                    ->helperText('Otomatis diisi dari nama. Ubah jika perlu kustomisasi URL.'),
+                    ->helperText(__('resources.categories.fields.slug_helper')),
                 Textarea::make('description')
                     ->label(__('resources.categories.fields.description'))
                     ->rows(3)
@@ -82,7 +82,7 @@ class CategoryResource extends Resource
             ->modifyQueryUsing(fn(Builder $query) => $query->withCount('products'))
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('#')
+                    ->label(__('resources.general.fields.row_index'))
                     ->rowIndex(),
                 TextColumn::make('name')
                     ->label(__('resources.categories.fields.name'))
@@ -100,7 +100,7 @@ class CategoryResource extends Resource
                     ->alignCenter(),
             ])
             ->headerActions([
-                CreateAction::make()->label(__('resources.general.actions.create') ?? 'Tambah Kategori'),
+                CreateAction::make()->label(__('resources.general.actions.create')),
             ])
             ->filters([
                 //
@@ -110,21 +110,24 @@ class CategoryResource extends Resource
                     ViewAction::make(),
                     EditAction::make(),
                     DeleteAction::make()
-                        ->modalDescription('Pastikan kategori ini tidak memiliki produk.')
+                        ->modalDescription(__('resources.categories.notifications.delete_confirm'))
                         ->action(function (Category $record) {
                             try {
                                 $record->delete();
-                                Notification::make()->success()->title('Kategori dihapus')->send();
+                                Notification::make()
+                                    ->success()
+                                    ->title(__('resources.categories.notifications.delete_success'))
+                                    ->send();
                             } catch (QueryException $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Gagal Menghapus')
-                                    ->body('Kategori ini sedang digunakan oleh Produk. Hapus atau pindahkan produk terlebih dahulu.')
+                                    ->title(__('resources.categories.notifications.delete_failed'))
+                                    ->body(__('resources.categories.notifications.delete_failed_body'))
                                     ->send();
                             } catch (\Exception $e) {
                                 Notification::make()
                                     ->danger()
-                                    ->title('Error Sistem')
+                                    ->title(__('resources.categories.notifications.system_error'))
                                     ->body($e->getMessage())
                                     ->send();
                             }

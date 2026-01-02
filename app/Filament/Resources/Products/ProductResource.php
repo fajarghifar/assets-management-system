@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Products;
 
-use UnitEnum;
 use App\Models\Product;
 use Filament\Tables\Table;
 use Filament\Schemas\Schema;

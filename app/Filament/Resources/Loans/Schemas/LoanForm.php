@@ -146,7 +146,7 @@ class LoanForm
 
                                             foreach ($assets as $asset) {
                                                 $site = $asset->location?->site?->value ?? '-';
-                                                $productName = $asset->product?->name ?? 'Unknown Product';
+                                                $productName = $asset->product?->name ?? __('resources.loans.fields.unknown_product');
                                                 $label = "{$productName} ({$assetLabel}: {$asset->asset_tag}) | {$asset->location?->name} ({$site})";
                                                 $results["asset_{$asset->id}"] = $label;
                                             }
@@ -160,7 +160,7 @@ class LoanForm
 
                                             foreach ($consumables as $stock) {
                                                 $site = $stock->location?->site?->value ?? '-';
-                                                $productName = $stock->product?->name ?? 'Unknown Product';
+                                                $productName = $stock->product?->name ?? __('resources.loans.fields.unknown_product');
                                                 $label = "{$productName} ({$stockLabel}: {$stock->quantity}) | {$stock->location?->name} ({$site})";
                                                 $results["consumable_{$stock->id}"] = $label;
                                             }
@@ -176,12 +176,12 @@ class LoanForm
                                             if ($type === 'asset') {
                                                 $asset = Asset::with(['product', 'location'])->find($id);
                                                 $site = $asset?->location?->site?->value ?? '-';
-                                                $productName = $asset->product?->name ?? 'Unknown Product';
+                                                $productName = $asset->product?->name ?? __('resources.loans.fields.unknown_product');
                                                 return $asset ? "{$productName} ({$assetLabel}: {$asset->asset_tag}) | {$asset->location?->name} ({$site})" : null;
                                             } else {
                                                 $stock = ConsumableStock::with(['product', 'location'])->find($id);
                                                 $site = $stock?->location?->site?->value ?? '-';
-                                                $productName = $stock->product?->name ?? 'Unknown Product';
+                                                $productName = $stock->product?->name ?? __('resources.loans.fields.unknown_product');
                                                 return $stock ? "{$productName} ({$stockLabel}: {$stock->quantity}) | {$stock->location?->name} ({$site})" : null;
                                             }
                                         })

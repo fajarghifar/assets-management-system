@@ -14,7 +14,10 @@ use Filament\Resources\RelationManagers\RelationManager;
 class HistoriesRelationManager extends RelationManager
 {
     protected static string $relationship = 'histories';
-    protected static ?string $title = 'Riwayat Aset';
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('resources.assets.history.title');
+    }
 
     /**
      * Configure the history table.
@@ -25,37 +28,37 @@ class HistoriesRelationManager extends RelationManager
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('created_at')
-                    ->label('Waktu')
+                    ->label(__('resources.assets.history.time'))
                     ->dateTime('d M Y, H:i')
                     ->sortable(),
 
                 TextColumn::make('executor.name')
-                    ->label('PIC / Admin')
+                    ->label(__('resources.assets.history.pic'))
                     ->icon('heroicon-m-user')
                     ->formatStateUsing(fn ($state) => $state ?? 'System')
                     ->color('gray'),
 
                 TextColumn::make('action_type')
-                    ->label('Aktivitas')
+                    ->label(__('resources.assets.history.activity'))
                     ->badge()
                     ->sortable(),
 
                 TextColumn::make('status')
-                    ->label('Status Aset')
+                    ->label(__('resources.assets.history.status'))
                     ->badge()
                     ->sortable(),
 
                 TextColumn::make('recipient_name')
-                    ->label('Peminjam / Penerima')
+                    ->label(__('resources.assets.history.recipient'))
                     ->searchable()
                     ->placeholder('-'),
 
                 TextColumn::make('location.name')
-                    ->label('Lokasi')
+                    ->label(__('resources.assets.history.location'))
                     ->searchable(),
 
                 TextColumn::make('notes')
-                    ->label('Catatan')
+                    ->label(__('resources.assets.history.notes'))
                     ->limit(50)
                     ->tooltip(fn(Model $record): string => $record->notes ?? '')
                     ->wrap(),

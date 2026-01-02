@@ -14,7 +14,7 @@ class CreateAsset extends CreateRecord
     {
         return [
             Action::make('back')
-                ->label('Kembali')
+                ->label(__('resources.general.actions.back'))
                 ->icon('heroicon-m-arrow-left')
                 ->url($this->getResource()::getUrl('index'))
                 ->color('gray'),

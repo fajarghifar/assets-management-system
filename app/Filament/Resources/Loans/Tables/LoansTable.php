@@ -30,7 +30,7 @@ class LoansTable
             ->defaultSort('created_at', 'desc')
             ->columns([
                 TextColumn::make('rowIndex')
-                    ->label('#')
+                    ->label(__('resources.general.fields.row_index'))
                     ->rowIndex(),
 
                 TextColumn::make('code')
