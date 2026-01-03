@@ -53,7 +53,7 @@ A comprehensive **Asset & Loan Management System** built with **Laravel 12** and
 * **Backend:** [Laravel 12](https://laravel.com/)
 * **Admin Panel:** [FilamentPHP v4](https://filamentphp.com/)
 * **Database:** MySQL / MariaDB
-* **Charts:** [ApexCharts](https://apexcharts.com/) (via Filament Widgets)
+* **Charts:** [ApexCharts](https://filamentphp.com/plugins/leandrocfe-apex-charts) (via Filament Widgets)
 
 ---
 
