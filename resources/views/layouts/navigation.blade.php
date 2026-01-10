@@ -1,35 +1,65 @@
-<nav x-data="{ open: false }" class="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700">
-    <!-- Primary Navigation Menu -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
+<section class="py-4 bg-background border-b border-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="{ mobileMenuOpen: false }">
+        <!-- Desktop Menu -->
+        <nav class="hidden items-center justify-between lg:flex">
+            <div class="flex items-center gap-6">
                 <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('dashboard') }}">
-                        <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                    </a>
-                </div>
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                    <x-application-logo class="w-8 h-8 fill-current text-foreground" />
+                    <span class="text-md font-semibold tracking-tighter text-foreground">
+                        {{ config('app.name', 'Laravel') }}
+                    </span>
+                </a>
 
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                <!-- Navigation Menu -->
+                <div class="flex items-center">
+                    <div class="flex flex-row gap-1">
+                        <!-- Dashboard Link -->
+                        <a href="{{ route('dashboard') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('dashboard') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
+                            <x-heroicon-o-squares-2x2 class="mr-2 h-4 w-4" />
+                            Dashboard
+                        </a>
+
+                        <!-- Products Dropdown -->
+                        <x-nav-dropdown>
+                            <x-slot name="icon">
+                                <x-heroicon-o-archive-box class="mr-2 h-4 w-4" />
+                            </x-slot>
+                            <x-slot name="trigger">
+                                Products
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link href="#">Blog</x-dropdown-link>
+                                <x-dropdown-link href="#">Company</x-dropdown-link>
+                                <x-dropdown-link href="#">Careers</x-dropdown-link>
+                                <x-dropdown-link href="#">Support</x-dropdown-link>
+                            </x-slot>
+                        </x-nav-dropdown>
+
+                        <!-- Resources Dropdown -->
+                        <x-nav-dropdown>
+                            <x-slot name="icon">
+                                <x-heroicon-o-folder class="mr-2 h-4 w-4" />
+                            </x-slot>
+                            <x-slot name="trigger">
+                                Resources
+                            </x-slot>
+                            <x-slot name="content">
+                                <x-dropdown-link href="#">Help Center</x-dropdown-link>
+                                <x-dropdown-link href="#">Contact Us</x-dropdown-link>
+                            </x-slot>
+                        </x-nav-dropdown>
+                    </div>
                 </div>
             </div>
 
-            <!-- Settings Dropdown -->
-            <div class="hidden sm:flex sm:items-center sm:ms-6">
+            <!-- User Auth Buttons -->
+            <div class="flex gap-2">
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
-                        <button class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none transition ease-in-out duration-150">
-                            <div>{{ Auth::user()->name }}</div>
-
-                            <div class="ms-1">
-                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
-                            </div>
+                        <button class="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 gap-2">
+                            <span class="hidden md:inline-flex">{{ Auth::user()->name }}</span>
+                            <x-avatar :name="Auth::user()->name" />
                         </button>
                     </x-slot>
 
@@ -51,50 +81,92 @@
                     </x-slot>
                 </x-dropdown>
             </div>
+        </nav>
 
-            <!-- Hamburger -->
-            <div class="-me-2 flex items-center sm:hidden">
-                <button @click="open = ! open" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 dark:text-gray-500 hover:text-gray-500 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 focus:outline-none focus:bg-gray-100 dark:focus:bg-gray-900 focus:text-gray-500 dark:focus:text-gray-400 transition duration-150 ease-in-out">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': ! open }" class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': ! open, 'inline-flex': open }" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+        <!-- Mobile Menu -->
+        <div class="block lg:hidden">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                    <x-application-logo class="w-8 h-8 fill-current text-foreground" />
+                </a>
+
+                <button @click="mobileMenuOpen = true" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 w-10">
+                    <x-heroicon-o-bars-3 class="h-4 w-4" />
                 </button>
             </div>
-        </div>
-    </div>
 
-    <!-- Responsive Navigation Menu -->
-    <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
-        </div>
-
-        <!-- Responsive Settings Options -->
-        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
-            <div class="px-4">
-                <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
+            <!-- Mobile Sheet/Drawer -->
+            <div x-show="mobileMenuOpen"
+                x-transition:enter="duration-300 ease-out"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="duration-200 ease-in"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+                style="display: none;"
+                @click="mobileMenuOpen = false">
             </div>
 
-            <div class="mt-3 space-y-1">
-                <x-responsive-nav-link :href="route('profile.edit')">
-                    {{ __('Profile') }}
-                </x-responsive-nav-link>
+            <div x-show="mobileMenuOpen"
+                x-transition:enter="duration-500 ease-in-out"
+                x-transition:enter-start="translate-x-full"
+                x-transition:enter-end="translate-x-0"
+                x-transition:leave="duration-500 ease-in-out"
+                x-transition:leave-start="translate-x-0"
+                x-transition:leave-end="translate-x-full"
+                class="fixed inset-y-0 right-0 z-50 h-full w-3/4 gap-4 border-l bg-background p-6 shadow-lg sm:max-w-sm"
+                style="display: none;"
+                @click.stop>
 
-                <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
+                <div class="flex flex-col gap-6">
+                    <div class="flex items-center justify-between">
+                        <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
+                            <x-application-logo class="w-8 h-8 fill-current text-foreground" />
+                            <span class="text-lg font-semibold">{{ config('app.name') }}</span>
+                        </a>
+                        <button @click="mobileMenuOpen = false" class="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+                            <span class="sr-only">Close</span>
+                            <x-heroicon-o-x-mark class="h-4 w-4" />
+                        </button>
+                    </div>
 
-                    <x-responsive-nav-link :href="route('logout')"
-                            onclick="event.preventDefault();
-                                        this.closest('form').submit();">
-                        {{ __('Log Out') }}
-                    </x-responsive-nav-link>
-                </form>
+                    <div class="flex w-full flex-col gap-4">
+                        <a href="{{ route('dashboard') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('dashboard') ? 'text-primary' : '' }}">Dashboard</a>
+
+                        <!-- Mobile Products Accordion -->
+                        <div x-data="{ expanded: false }" class="border-b-0">
+                            <button @click="expanded = !expanded" class="flex flex-1 items-center justify-between py-0 font-semibold transition-all hover:underline [&[data-state=open]>svg]:rotate-180 w-full text-left text-md">
+                                Products
+                                <x-heroicon-o-chevron-down :class="{'rotate-180': expanded}" class="h-4 w-4 shrink-0 transition-transform duration-200" />
+                            </button>
+                            <div x-show="expanded" x-collapse>
+                                <div class="mt-2 flex flex-col gap-2 pl-4 border-l border-border ml-2">
+                                    <a class="text-sm font-medium hover:underline py-1" href="#">Blog</a>
+                                    <a class="text-sm font-medium hover:underline py-1" href="#">Company</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mobile User Menu -->
+                        <div class="pt-4 mt-4 border-t border-border">
+                            <div class="font-medium text-base text-foreground mb-2">{{ Auth::user()->name }}</div>
+                            <div class="flex flex-col gap-3">
+                                <a href="{{ route('profile.edit') }}" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-full">
+                                    Profile
+                                </a>
+                                <form method="POST" action="{{ route('logout') }}" class="w-full">
+                                    @csrf
+                                    <button type="submit" class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 w-full">
+                                        Log Out
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</nav>
+</section>
