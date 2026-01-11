@@ -26,6 +26,12 @@
                             Locations
                         </a>
 
+                        <!-- Categories Link -->
+                        <a href="{{ route('categories.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('categories.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
+                            <x-heroicon-o-tag class="mr-2 h-4 w-4" />
+                            Categories
+                        </a>
+
                         <!-- Products Dropdown -->
                         <x-nav-dropdown>
                             <x-slot name="icon">
@@ -141,6 +147,7 @@
                     <div class="flex w-full flex-col gap-4">
                         <a href="{{ route('dashboard') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('dashboard') ? 'text-primary' : '' }}">Dashboard</a>
                         <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
+                        <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">Categories</a>
 
                         <!-- Mobile Products Accordion -->
                         <div x-data="{ expanded: false }" class="border-b-0">

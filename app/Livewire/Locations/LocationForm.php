@@ -102,7 +102,7 @@ class LocationForm extends Component
             }
 
             $this->dispatch('close-modal', name: 'location-form-modal');
-            $this->dispatch('pg:eventRefresh-default');
+            $this->dispatch('pg:eventRefresh-locations-table');
             $this->dispatch('toast', message: $message, type: 'success');
 
             $this->reset(['code', 'site', 'name', 'description', 'location', 'isEditing']);

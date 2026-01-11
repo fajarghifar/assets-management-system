@@ -1,43 +1,34 @@
 <div>
-    <x-modal name="location-detail-modal" :title="''" maxWidth="lg">
-        @if($location)
+    <x-modal name="category-detail-modal" :title="''" maxWidth="lg">
+        @if($category)
             <div class="p-6">
                 <!-- Custom Header -->
                 <div class="mb-6 space-y-1.5 text-center sm:text-left">
                     <div class="flex items-center justify-between">
                         <h3 class="text-lg font-semibold leading-none tracking-tight text-foreground">
-                            Location Details
+                            Category Details
                         </h3>
                     </div>
                     <p class="text-sm text-muted-foreground">
-                        Detailed information about the location {{ $location->code }}.
+                        Detailed information about the category {{ $category->name }}.
                     </p>
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Code & Site -->
+                    <!-- Name & Slug -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Code
+                                Name
                             </label>
-                            <p class="text-sm text-muted-foreground">{{ $location->code }}</p>
+                            <p class="text-sm text-foreground">{{ $category->name }}</p>
                         </div>
-
                         <div class="space-y-1">
                             <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Site
+                                Slug
                             </label>
-                            <p class="text-sm text-muted-foreground">{{ $location->site }}</p>
+                            <p class="text-sm text-muted-foreground">{{ $category->slug }}</p>
                         </div>
-                    </div>
-
-                    <!-- Name -->
-                    <div class="space-y-1">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Name
-                        </label>
-                        <p class="text-sm text-foreground">{{ $location->name }}</p>
                     </div>
 
                     <!-- Description -->
@@ -46,7 +37,7 @@
                             Description
                         </label>
                         <p class="text-sm text-muted-foreground leading-relaxed">
-                            {{ $location->description ?? '-' }}
+                            {{ $category->description ?? '-' }}
                         </p>
                     </div>
 
@@ -55,18 +46,18 @@
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                             Created At
                         </label>
-                        <p class="text-sm text-muted-foreground">{{ $location->created_at->format('d M Y') }}</p>
+                        <p class="text-sm text-muted-foreground">{{ $category->created_at->format('d M Y') }}</p>
                     </div>
                 </div>
 
                 <!-- Footer Actions -->
                 <div class="mt-6 flex items-center justify-end gap-x-2">
-                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'location-detail-modal' })">
+                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'category-detail-modal' })">
                         {{ __('Close') }}
                     </x-secondary-button>
-                    <x-primary-button type="button" x-on:click="$dispatch('close-modal', { name: 'location-detail-modal' }); $dispatch('edit-location', { location: {{ $location->id }} })">
+                    <x-primary-button type="button" x-on:click="$dispatch('close-modal', { name: 'category-detail-modal' }); $dispatch('edit-category', { category: {{ $category->id }} })">
                         <x-heroicon-o-pencil-square class="w-4 h-4 mr-2" />
-                        {{ __('Edit Location') }}
+                        {{ __('Edit Category') }}
                     </x-primary-button>
                 </div>
             </div>
