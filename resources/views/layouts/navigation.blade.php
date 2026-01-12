@@ -21,7 +21,7 @@
                         </a>
 
                         <!-- Products Dropdown -->
-                        <x-nav-dropdown active="{{ request()->routeIs('products.*') }}">
+                        <x-nav-dropdown active="{{ request()->routeIs(['products.*', 'stocks.*']) }}">
                             <x-slot name="icon">
                                 <x-heroicon-o-archive-box class="mr-2 h-4 w-4" />
                             </x-slot>
@@ -29,23 +29,17 @@
                                 Products
                             </x-slot>
                             <x-slot name="content">
-                                <x-dropdown-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                                <x-dropdown-link :href="route('products.index')" :active="request()->routeIs('products.*')">
                                     Products
                                 </x-dropdown-link>
                                 {{-- <x-dropdown-link :href="route('assets.index')" :active="request()->routeIs('assets.index')">
                                     Assets
-                                </x-dropdown-link>
-                                <x-dropdown-link :href="route('stocks.index')" :active="request()->routeIs('stocks.index')">
-                                    Stocks
                                 </x-dropdown-link> --}}
+                                <x-dropdown-link :href="route('stocks.index')" :active="request()->routeIs('stocks.*')">
+                                    Stocks
+                                </x-dropdown-link>
                             </x-slot>
                         </x-nav-dropdown>
-
-                        <!-- Locations Link -->
-                        <a href="{{ route('locations.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('locations.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
-                            <x-heroicon-o-map-pin class="mr-2 h-4 w-4" />
-                            Locations
-                        </a>
 
                         <!-- Categories Link -->
                         <a href="{{ route('categories.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('categories.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
@@ -53,8 +47,14 @@
                             Categories
                         </a>
 
+                        <!-- Locations Link -->
+                        <a href="{{ route('locations.index') }}" class="group inline-flex h-10 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-muted hover:text-accent-foreground disabled:pointer-events-none disabled:opacity-50 {{ request()->routeIs('locations.*') ? 'bg-accent/50 text-accent-foreground' : 'bg-background' }}">
+                            <x-heroicon-o-map-pin class="mr-2 h-4 w-4" />
+                            Locations
+                        </a>
+
                         <!-- Resources Dropdown -->
-                        <x-nav-dropdown>
+                        {{-- <x-nav-dropdown>
                             <x-slot name="icon">
                                 <x-heroicon-o-folder class="mr-2 h-4 w-4" />
                             </x-slot>
@@ -65,7 +65,7 @@
                                 <x-dropdown-link href="#">Help Center</x-dropdown-link>
                                 <x-dropdown-link href="#">Contact Us</x-dropdown-link>
                             </x-slot>
-                        </x-nav-dropdown>
+                        </x-nav-dropdown> --}}
                     </div>
                 </div>
             </div>
@@ -167,8 +167,9 @@
                             </div>
                         </div>
 
-                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
                         <a href="{{ route('categories.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('categories.*') ? 'text-primary' : '' }}">Categories</a>
+
+                        <a href="{{ route('locations.index') }}" class="text-md font-semibold hover:underline {{ request()->routeIs('locations.*') ? 'text-primary' : '' }}">Locations</a>
 
                         <!-- Mobile User Menu -->
                         <div class="pt-4 mt-4 border-t border-border">

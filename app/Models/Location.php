@@ -20,4 +20,10 @@ class Location extends Model
     protected $casts = [
         'site' => LocationSite::class,
     ];
+
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->site->getLabel()} - {$this->name}";
+    }
+
 }

@@ -22,5 +22,12 @@ class DatabaseSeeder extends Seeder
             'username' => 'admin',
             'email' => 'admin@admin.com',
         ]);
+
+        $this->call([
+            LocationSeeder::class,
+            CategorySeeder::class,
+            ProductSeeder::class,
+            ConsumableStockSeeder::class,
+        ]);
     }
 }
