@@ -29,20 +29,13 @@ class StockForm extends Component
 
     public function mount()
     {
-        $this->productOptions = Product::where('type', ProductType::Consumable)
-            ->get()
-            ->map(fn($p) => ['value' => $p->id, 'label' => $p->name . ' (' . $p->code . ')'])
-            ->toArray();
-
-        $this->locationOptions = Location::all()
-            ->map(fn($l) => ['value' => $l->id, 'label' => $l->name . ' (' . $l->code . ')'])
-            ->toArray();
+        // No heavy loading here
     }
 
     #[On('create-stock')]
     public function create()
     {
-        $this->reset(['stockId', 'product_id', 'location_id', 'quantity', 'min_quantity']);
+        $this->reset(['stockId', 'product_id', 'location_id', 'quantity', 'min_quantity', 'productOptions', 'locationOptions']);
         $this->isEditing = false;
         $this->dispatch('open-modal', name: 'stock-form-modal');
     }
@@ -55,6 +48,15 @@ class StockForm extends Component
         $this->location_id = $stock->location_id;
         $this->quantity = $stock->quantity;
         $this->min_quantity = $stock->min_quantity;
+
+        // Populate options for the selected items so the component can display the label
+        $this->productOptions = [
+            ['value' => $stock->product->id, 'label' => $stock->product->name . ' (' . $stock->product->code . ')']
+        ];
+
+        $this->locationOptions = [
+            ['value' => $stock->location->id, 'label' => $stock->location->name . ' (' . $stock->location->code . ')']
+        ];
 
         $this->isEditing = true;
         $this->dispatch('open-modal', name: 'stock-form-modal');

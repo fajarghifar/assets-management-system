@@ -15,20 +15,20 @@
                 </div>
 
                 <div class="space-y-4">
-                    <!-- Name & Slug -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Name
-                            </label>
-                            <p class="text-sm text-foreground">{{ $category->name }}</p>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                Slug
-                            </label>
-                            <p class="text-sm text-muted-foreground">{{ $category->slug }}</p>
-                        </div>
+                    <!-- Name -->
+                    <div class="space-y-1">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Name
+                        </label>
+                        <p class="text-sm text-foreground">{{ $category->name }}</p>
+                    </div>
+
+                    <!-- Slug -->
+                    <div class="space-y-1">
+                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                            Slug
+                        </label>
+                        <p class="text-sm text-muted-foreground">{{ $category->slug }}</p>
                     </div>
 
                     <!-- Description -->
@@ -41,7 +41,7 @@
                         </p>
                     </div>
 
-                    <!-- Created At -->
+                    <!-- Creatced At -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                             Created At

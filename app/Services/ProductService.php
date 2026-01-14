@@ -69,8 +69,13 @@ class ProductService
     {
         return DB::transaction(function () use ($product) {
             try {
-                // Future: Check dependencies (assets, stocks) before delete?
-                // Currently relying on Foreign Key constraints/cascades or UI warnings.
+                if ($product->assets()->exists()) {
+                    throw new Exception("Cannot delete product because it has associated assets. Please delete the assets first.");
+                }
+
+                if ($product->consumableStocks()->exists()) {
+                    throw new Exception("Cannot delete product because it has associated consumable stocks. Please delete the stocks first.");
+                }
 
                 $product->delete();
 

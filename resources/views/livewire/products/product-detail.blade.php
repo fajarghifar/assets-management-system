@@ -16,10 +16,9 @@
 
                 <div class="space-y-4">
                     <!-- Name & Code -->
-                    <!-- Code / SKU -->
                     <div class="space-y-1">
                         <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Code / SKU
+                            Code
                         </label>
                         <p class="text-sm text-muted-foreground">{{ $product->code }}</p>
                     </div>
@@ -74,14 +73,6 @@
                         <p class="text-sm text-muted-foreground leading-relaxed">
                             {{ $product->description ?? '-' }}
                         </p>
-                    </div>
-
-                    <!-- Created At -->
-                    <div class="space-y-1">
-                        <label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                            Created At
-                        </label>
-                        <p class="text-sm text-muted-foreground">{{ $product->created_at->format('d M Y') }}</p>
                     </div>
                 </div>
 

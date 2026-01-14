@@ -70,8 +70,7 @@ final class StocksTable extends PowerGridComponent
     {
         return PowerGrid::fields()
             ->add('id')
-            ->add('product_code', fn($stock) => $stock->product->code)
-            ->add('product_name', fn ($stock) => $stock->product->name)
+            ->add('product_name', fn($stock) => $stock->product->name . ' (' . $stock->product->code . ')')
             ->add('location_site', fn ($stock) => $stock->location->site->getLabel())
             ->add('location_name', fn ($stock) => $stock->location->name)
             ->add('quantity')
@@ -90,9 +89,6 @@ final class StocksTable extends PowerGridComponent
         return [
             Column::make('ID', 'id')
                 ->hidden(),
-
-            Column::make('Product Code', 'product_code', 'product_id')
-                ->searchable(),
 
             Column::make('Product', 'product_name', 'product_id')
                 ->sortable()

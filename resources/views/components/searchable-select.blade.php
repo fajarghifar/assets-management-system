@@ -62,6 +62,7 @@
             this.open = false;
         }
     }"
+    x-modelable="selected"
     class="relative"
 >
     <x-input-label :for="$name" :value="$label" :required="$required" />

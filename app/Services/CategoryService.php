@@ -81,7 +81,9 @@ class CategoryService
     {
         return DB::transaction(function () use ($category) {
             try {
-                // Check if currently used? (Future enhancement for foreign keys)
+                if ($category->products()->exists()) {
+                    throw new Exception("Cannot delete category '{$category->name}' because it has associated products.");
+                }
 
                 $category->delete();
 

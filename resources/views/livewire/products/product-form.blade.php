@@ -14,7 +14,7 @@
             <!-- Code -->
             <x-form-input
                 name="code"
-                label="Code / SKU"
+                label="Code"
                 type="text"
                 wire:model="code"
                 placeholder="e.g. HDD500, SSD258"

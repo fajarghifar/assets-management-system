@@ -88,13 +88,9 @@ final class LocationsTable extends PowerGridComponent
                 ->sortable()
                 ->searchable(),
 
-            Column::make('Description', 'description')
-                ->sortable()
-                ->searchable(),
+            Column::make('Description', 'description'),
 
-            Column::action('Action')
-                ->headerAttribute('text-center')
-                ->bodyAttribute('text-center'),
+            Column::action('Action'),
         ];
     }
 

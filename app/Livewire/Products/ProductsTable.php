@@ -82,38 +82,22 @@ final class ProductsTable extends PowerGridComponent
     {
         return [
             Column::make('ID', 'id')
-                ->sortable()
-                ->searchable()
                 ->hidden(),
 
             Column::make('Code', 'code')
-                ->sortable()
-                ->searchable()
-                ->headerAttribute('text-left')
-                ->bodyAttribute('text-left text-indigo-600 hover:text-indigo-900'),
+                ->searchable(),
 
             Column::make('Name', 'name')
                 ->sortable()
-                ->searchable()
-                ->headerAttribute('text-left')
-                ->bodyAttribute('text-left'),
+                ->searchable(),
 
-            Column::make('Category', 'category_name', 'category_id')
-                ->sortable()
-                ->headerAttribute('text-left')
-                ->bodyAttribute('text-left'),
+            Column::make('Category', 'category_name', 'category_id'),
 
-            Column::make('Type', 'type_label', 'type')
-                ->headerAttribute('text-left')
-                ->bodyAttribute('text-left'),
+            Column::make('Type', 'type_label', 'type'),
 
-            Column::make('Loanable', 'can_be_loaned_label')
-                ->headerAttribute('text-left')
-                ->bodyAttribute('text-left'),
+            Column::make('Loanable', 'can_be_loaned_label'),
 
-            Column::action('Action')
-                ->headerAttribute('text-left')
-                ->bodyAttribute('text-left'),
+            Column::action('Action'),
         ];
     }
 
