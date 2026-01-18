@@ -2,15 +2,18 @@
 
 namespace App\Services;
 
-use Exception;
+
+use Throwable;
 use App\Models\Loan;
 use App\Models\Asset;
+use App\DTOs\LoanData;
 use App\Enums\LoanStatus;
 use App\Enums\AssetStatus;
 use App\Enums\LoanItemType;
 use App\Models\ConsumableStock;
+use App\DTOs\ConsumableStockData;
+use App\Exceptions\LoanException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class LoanService
@@ -22,99 +25,104 @@ class LoanService
 
     /**
      * Create a new Loan with items.
-     *
-     * @param array $data Loan data (user_id, loan_date, etc.)
-     * @param array $items Array of items (type, asset_id/stock_id, qty)
-     * @return Loan
-     * @throws Exception
      */
-    public function createLoan(array $data, array $items): Loan
+    public function createLoan(LoanData $data): Loan
     {
-        return DB::transaction(function () use ($data, $items) {
+        return DB::transaction(function () use ($data) {
             try {
                 // Pre-validate availability
-                foreach ($items as $item) {
-                    if ($item['type'] === LoanItemType::Asset->value) {
-                        $this->validateAssetAvailability($item['asset_id']);
-                    } elseif ($item['type'] === LoanItemType::Consumable->value) {
-                        $this->validateStockAvailability($item['consumable_stock_id'], $item['quantity_borrowed']);
+                foreach ($data->items as $item) {
+                    if ($item->type === LoanItemType::Asset) {
+                        $this->validateAssetAvailability($item->asset_id);
+                    } elseif ($item->type === LoanItemType::Consumable) {
+                        $this->validateStockAvailability($item->consumable_stock_id, $item->quantity_borrowed);
                     }
                 }
 
                 $loan = Loan::create([
-                    'user_id' => $data['user_id'] ?? null,
-                    'borrower_name' => $data['borrower_name'] ?? null,
-                    'code' => $data['code'],
-                    'purpose' => $data['purpose'] ?? null,
-                    'loan_date' => $data['loan_date'],
-                    'due_date' => $data['due_date'],
+                    'user_id' => $data->user_id,
+                    'borrower_name' => $data->borrower_name,
+                    'code' => $data->code,
+                    'purpose' => $data->purpose,
+                    'loan_date' => $data->loan_date,
+                    'due_date' => $data->due_date,
                     'status' => LoanStatus::Pending,
-                    'notes' => $data['notes'] ?? null,
-                    'proof_image' => $data['proof_image'] ?? null,
+                    'notes' => $data->notes,
+                    'proof_image' => $data->proof_image,
                 ]);
 
-                foreach ($items as $item) {
+                foreach ($data->items as $item) {
                     $loan->items()->create([
-                        'type' => $item['type'],
-                        'asset_id' => $item['asset_id'] ?? null,
-                        'consumable_stock_id' => $item['consumable_stock_id'] ?? null,
-                        'quantity_borrowed' => $item['quantity_borrowed'],
+                        'type' => $item->type,
+                        'asset_id' => $item->asset_id,
+                        'consumable_stock_id' => $item->consumable_stock_id,
+                        'quantity_borrowed' => $item->quantity_borrowed,
                         'quantity_returned' => 0,
                     ]);
                 }
 
                 return $loan;
 
-            } catch (Exception $e) {
-                Log::error("Failed to create loan: " . $e->getMessage());
+            } catch (LoanException $e) {
                 throw $e;
+            } catch (Throwable $e) {
+                throw LoanException::createFailed($e->getMessage(), $e);
             }
         });
     }
 
-    public function updateLoan(Loan $loan, array $data, array $items): Loan
+    public function updateLoan(Loan $loan, LoanData $data): Loan
     {
-        return DB::transaction(function () use ($loan, $data, $items) {
+        return DB::transaction(function () use ($loan, $data) {
             if ($loan->status !== LoanStatus::Pending) {
-                throw new Exception("Cannot edit loan that is not in Pending status.");
+                throw LoanException::updateFailed("Cannot edit loan that is not in Pending status.");
             }
 
-            // Re-validate availability
-            foreach ($items as $item) {
-                if ($item['type'] === LoanItemType::Asset->value) {
-                    $this->validateAssetAvailability($item['asset_id']);
-                } elseif ($item['type'] === LoanItemType::Consumable->value) {
-                    $this->validateStockAvailability($item['consumable_stock_id'], $item['quantity_borrowed']);
+            try {
+                // Re-validate availability
+                foreach ($data->items as $item) {
+                    if ($item->type === LoanItemType::Asset) {
+                        $this->validateAssetAvailability($item->asset_id);
+                    } elseif ($item->type === LoanItemType::Consumable) {
+                        $this->validateStockAvailability($item->consumable_stock_id, $item->quantity_borrowed);
+                    }
                 }
+
+                $updateData = [
+                    'user_id' => Auth::id(), // Updater
+                    'borrower_name' => $data->borrower_name,
+                    'purpose' => $data->purpose,
+                    'loan_date' => $data->loan_date,
+                    'due_date' => $data->due_date,
+                    'notes' => $data->notes,
+                ];
+
+                if ($data->proof_image) {
+                    $updateData['proof_image'] = $data->proof_image;
+                }
+
+                $loan->update($updateData);
+
+                // Sync items by replacing them
+                $loan->items()->delete();
+
+                foreach ($data->items as $item) {
+                    $loan->items()->create([
+                        'type' => $item->type,
+                        'asset_id' => $item->asset_id,
+                        'consumable_stock_id' => $item->consumable_stock_id,
+                        'quantity_borrowed' => $item->quantity_borrowed,
+                        'quantity_returned' => 0,
+                    ]);
+                }
+
+                return $loan;
+
+            } catch (LoanException $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                throw LoanException::updateFailed($e->getMessage(), $e);
             }
-
-            $loan->update([
-                'user_id' => Auth::id(),
-                'borrower_name' => $data['borrower_name'] ?? null,
-                'purpose' => $data['purpose'] ?? null,
-                'loan_date' => $data['loan_date'],
-                'due_date' => $data['due_date'],
-                'notes' => $data['notes'] ?? null,
-            ]);
-
-            if (isset($data['proof_image'])) {
-                $loan->update(['proof_image' => $data['proof_image']]);
-            }
-
-            // Sync items by replacing them
-            $loan->items()->delete();
-
-            foreach ($items as $item) {
-                $loan->items()->create([
-                    'type' => $item['type'],
-                    'asset_id' => $item['asset_id'] ?? null,
-                    'consumable_stock_id' => $item['consumable_stock_id'] ?? null,
-                    'quantity_borrowed' => $item['quantity_borrowed'],
-                    'quantity_returned' => 0,
-                ]);
-            }
-
-            return $loan;
         });
     }
 
@@ -122,114 +130,147 @@ class LoanService
     {
         DB::transaction(function () use ($loan) {
             if ($loan->status !== LoanStatus::Pending) {
-                throw new Exception("Loan status must be pending to approve. Current status: {$loan->status->value}");
+                throw LoanException::approveFailed("Loan status must be pending to approve. Current status: {$loan->status->value}");
             }
 
-            foreach ($loan->items as $item) {
-                if ($item->type === LoanItemType::Asset) {
-                    $asset = Asset::find($item->asset_id);
-                    if ($asset) {
-                        if ($asset->status !== AssetStatus::InStock) {
-                            throw new Exception("Asset {$asset->asset_tag} is no longer available.");
+            try {
+                foreach ($loan->items as $item) {
+                    if ($item->type === LoanItemType::Asset) {
+                        $asset = Asset::where('id', $item->asset_id)->lockForUpdate()->first();
+                        if ($asset) {
+                            if ($asset->status !== AssetStatus::InStock) {
+                                throw LoanException::assetUnavailable($asset->asset_tag, $asset->status->getLabel());
+                            }
+                            $this->assetService->updateStatus($asset, AssetStatus::Loaned, "Loan Approved: {$loan->code}");
                         }
-                        $this->assetService->updateStatus($asset, AssetStatus::Loaned, "Loan Approved: {$loan->code}");
-                    }
-                } elseif ($item->type === LoanItemType::Consumable) {
-                    $stock = ConsumableStock::find($item->consumable_stock_id);
-                    if ($stock) {
-                        if ($stock->quantity < $item->quantity_borrowed) {
-                            throw new Exception("Insufficient stock for item {$stock->product?->name}.");
+                    } elseif ($item->type === LoanItemType::Consumable) {
+                        $stock = ConsumableStock::where('id', $item->consumable_stock_id)->lockForUpdate()->first();
+                        if ($stock) {
+                            if ($stock->quantity < $item->quantity_borrowed) {
+                                throw LoanException::insufficientStock($stock->product?->name ?? 'Unknown', $item->quantity_borrowed, $stock->quantity);
+                            }
+
+                            $stockDto = new ConsumableStockData(
+                                product_id: $stock->product_id,
+                                location_id: $stock->location_id,
+                                quantity: $stock->quantity - $item->quantity_borrowed,
+                                min_quantity: $stock->min_quantity
+                            );
+
+                            $this->stockService->updateStock($stock, $stockDto);
                         }
-                        $this->stockService->updateStock($stock, [
-                            'quantity' => $stock->quantity - $item->quantity_borrowed
-                        ]);
                     }
                 }
-            }
 
-            $loan->update(['status' => LoanStatus::Approved]);
+                $loan->update(['status' => LoanStatus::Approved]);
+
+            } catch (LoanException $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                throw LoanException::approveFailed($e->getMessage(), $e);
+            }
         });
     }
 
     public function rejectLoan(Loan $loan, ?string $reason = null): void
     {
         if ($loan->status !== LoanStatus::Pending) {
-            throw new Exception("Only pending loans can be rejected.");
+            throw LoanException::rejectFailed("Only pending loans can be rejected.");
         }
-        $loan->update([
-            'status' => LoanStatus::Rejected,
-            'notes' => $reason ? $loan->notes . "\nRejection Reason: " . $reason : $loan->notes
-        ]);
+
+        try {
+            $loan->update([
+                'status' => LoanStatus::Rejected,
+                'notes' => $reason ? $loan->notes . "\nRejection Reason: " . $reason : $loan->notes
+            ]);
+        } catch (Throwable $e) {
+            throw LoanException::rejectFailed($e->getMessage(), $e);
+        }
     }
 
     public function restoreLoan(Loan $loan): void
     {
         if ($loan->status !== LoanStatus::Rejected) {
-            throw new Exception("Only rejected loans can be restored.");
+            throw LoanException::restoreFailed("Only rejected loans can be restored.");
         }
 
-        $loan->update([
-            'status' => LoanStatus::Pending,
-            'notes' => $loan->notes . "\n[System] Restored to Pending at " . now()->toDateTimeString(),
-        ]);
+        try {
+            $loan->update([
+                'status' => LoanStatus::Pending,
+                'notes' => $loan->notes . "\n[System] Restored to Pending at " . now()->toDateTimeString(),
+            ]);
+        } catch (Throwable $e) {
+            throw LoanException::restoreFailed($e->getMessage(), $e);
+        }
     }
 
     public function returnItems(Loan $loan, array $returnDetails): void
     {
         DB::transaction(function () use ($loan, $returnDetails) {
-            foreach ($returnDetails as $itemId => $returnData) {
-                $item = $loan->items()->find($itemId);
+            try {
+                foreach ($returnDetails as $itemId => $returnData) {
+                    $item = $loan->items()->find($itemId);
 
-                if (!$item || $item->loan_id !== $loan->id) {
-                    continue;
-                }
-
-                if ($item->type === LoanItemType::Asset) {
-                    if (!empty($returnData['is_returned'])) {
-                        $asset = Asset::find($item->asset_id);
-                        if ($asset && $asset->status === AssetStatus::Loaned) {
-                            $this->assetService->updateStatus($asset, AssetStatus::InStock, "Returned from Loan: {$loan->code}");
-                        }
-                        $item->update([
-                            'quantity_returned' => 1,
-                            'returned_at' => now(),
-                        ]);
-                    }
-                } elseif ($item->type === LoanItemType::Consumable) {
-                    $qtyReturning = (int) ($returnData['quantity_returned'] ?? 0);
-
-                    if ($qtyReturning < 0) {
+                    if (!$item || $item->loan_id !== $loan->id) {
                         continue;
                     }
 
-                    $remainingToReturn = $item->quantity_borrowed - $item->quantity_returned;
-                    if ($qtyReturning > $remainingToReturn) {
-                        throw new Exception("Cannot return more than borrowed/remaining quantity for item ID {$itemId}.");
-                    }
-
-                    if ($qtyReturning > 0) {
-                        $stock = ConsumableStock::find($item->consumable_stock_id);
-                        if ($stock) {
-                            $this->stockService->updateStock($stock, [
-                                'quantity' => $stock->quantity + $qtyReturning
+                    if ($item->type === LoanItemType::Asset) {
+                        if (!empty($returnData['is_returned'])) {
+                            $asset = Asset::where('id', $item->asset_id)->lockForUpdate()->first();
+                            if ($asset && $asset->status === AssetStatus::Loaned) {
+                                $this->assetService->updateStatus($asset, AssetStatus::InStock, "Returned from Loan: {$loan->code}");
+                            }
+                            $item->update([
+                                'quantity_returned' => 1,
+                                'returned_at' => now(),
                             ]);
                         }
+                    } elseif ($item->type === LoanItemType::Consumable) {
+                        $qtyReturning = (int) ($returnData['quantity_returned'] ?? 0);
+
+                        if ($qtyReturning < 0) {
+                            continue;
+                        }
+
+                        $remainingToReturn = $item->quantity_borrowed - $item->quantity_returned;
+                        if ($qtyReturning > $remainingToReturn) {
+                            throw LoanException::returnFailed("Cannot return more than borrowed/remaining quantity for item ID {$itemId}.");
+                        }
+
+                        if ($qtyReturning > 0) {
+                            $stock = ConsumableStock::where('id', $item->consumable_stock_id)->lockForUpdate()->first();
+                            if ($stock) {
+                                $stockDto = new ConsumableStockData(
+                                    product_id: $stock->product_id,
+                                    location_id: $stock->location_id,
+                                    quantity: $stock->quantity + $qtyReturning,
+                                    min_quantity: $stock->min_quantity
+                                );
+
+                                $this->stockService->updateStock($stock, $stockDto);
+                            }
+                        }
+
+                        $item->increment('quantity_returned', $qtyReturning);
+                        $item->update(['returned_at' => now()]);
                     }
-
-                    $item->increment('quantity_returned', $qtyReturning);
-                    $item->update(['returned_at' => now()]);
                 }
-            }
 
-            $loan->refresh();
+                $loan->refresh();
 
-            $allSettled = $loan->items->every(fn($i) => !is_null($i->returned_at));
+                $allSettled = $loan->items->every(fn($i) => !is_null($i->returned_at));
 
-            if ($allSettled) {
-                $loan->update([
-                    'status' => LoanStatus::Closed,
-                    'returned_date' => now()
-                ]);
+                if ($allSettled) {
+                    $loan->update([
+                        'status' => LoanStatus::Closed,
+                        'returned_date' => now()
+                    ]);
+                }
+            } catch (LoanException $e) {
+                throw $e;
+            } catch (Throwable $e) {
+                throw LoanException::returnFailed($e->getMessage(), $e);
             }
         });
     }
@@ -242,10 +283,10 @@ class LoanService
 
         $asset = Asset::find($assetId);
         if (!$asset) {
-            throw new Exception("Asset not found with ID: {$assetId}");
+            throw LoanException::createFailed("Asset not found with ID: {$assetId}");
         }
         if ($asset->status !== AssetStatus::InStock) {
-            throw new Exception("Asset {$asset->asset_tag} is currently not available (Status: {$asset->status->getLabel()}).");
+            throw LoanException::assetUnavailable($asset->asset_tag, $asset->status->getLabel());
         }
     }
 
@@ -257,22 +298,26 @@ class LoanService
 
         $stock = ConsumableStock::find($stockId);
         if (!$stock) {
-            throw new Exception("Stock item not found.");
+            throw LoanException::createFailed("Stock item not found.");
         }
         if ($stock->quantity < $qty) {
-            throw new Exception("Insufficient stock for {$stock->product?->name}. Requested: {$qty}, Available: {$stock->quantity}");
+            throw LoanException::insufficientStock($stock->product?->name ?? 'Unknown Item', $qty, $stock->quantity);
         }
     }
 
     public function deleteLoan(Loan $loan): void
     {
         if ($loan->status !== LoanStatus::Pending && $loan->status !== LoanStatus::Rejected) {
-            throw new Exception("Only Pending or Rejected loans can be deleted.");
+            throw LoanException::deletionFailed("Only Pending or Rejected loans can be deleted.");
         }
 
         DB::transaction(function () use ($loan) {
-            $loan->items()->delete();
-            $loan->delete();
+            try {
+                $loan->items()->delete();
+                $loan->delete();
+            } catch (Throwable $e) {
+                throw LoanException::deletionFailed($e->getMessage(), $e);
+            }
         });
     }
 

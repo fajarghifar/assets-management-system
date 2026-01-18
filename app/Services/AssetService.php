@@ -53,6 +53,36 @@ class AssetService
     }
 
     /**
+     * Update asset status (e.g. for loans).
+     */
+    public function updateStatus(Asset $asset, AssetStatus $status, ?string $notes = null): Asset
+    {
+        return DB::transaction(function () use ($asset, $status, $notes) {
+            try {
+                $oldStatus = $asset->status;
+
+                if ($oldStatus === $status) {
+                    return $asset;
+                }
+
+                $asset->update(['status' => $status]);
+
+                $this->logHistory(
+                    asset: $asset,
+                    actionType: 'status_change',
+                    notes: $notes ?? "Status changed to {$status->getLabel()}",
+                    newStatus: $status
+                );
+
+                return $asset->refresh();
+
+            } catch (Throwable $e) {
+                throw AssetException::updateFailed((string) $asset->id, "Status update failed: " . $e->getMessage(), $e);
+            }
+        });
+    }
+
+    /**
      * Update an asset and log history if critical fields change.
      */
     public function updateAsset(Asset $asset, AssetData $data): Asset

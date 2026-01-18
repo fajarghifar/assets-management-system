@@ -9,6 +9,7 @@
     'url' => null,
     'inputClass' => 'h-10',
     'initialLabel' => '',
+    'params' => [],
 ])
 
 <div
@@ -18,6 +19,7 @@
         selected: @js($value),
         options: @js($options),
         isLoading: false,
+        params: @js($params),
         init() {
             if (this.selected && this.options.length > 0) {
                 const option = this.options.find(o => o.value == this.selected);
@@ -29,6 +31,8 @@
                     this.fetchOptions(value);
                 }
             });
+
+            // Watch for external param updates (if bound via Alpine)
         },
         async fetchOptions(search) {
             this.isLoading = true;
@@ -39,9 +43,14 @@
                     return;
                 }
 
-                // Dynamic Params from data attributes on the root element
-                const type = this.$el.dataset.type || '';
-                const queryParams = new URLSearchParams({ q: search, type: type });
+                // Merge props and legacy dataset params
+                const type = this.$el.dataset.type || (this.params && this.params.type) || '';
+
+                const queryParams = new URLSearchParams({
+                    q: search,
+                    type: type,
+                    ...this.params
+                });
 
                 const res = await fetch(`${urlBase}?${queryParams.toString()}`, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -98,7 +107,7 @@
             x-on:focus="!{{ $disabled ? 'true' : 'false' }} && (open = true)"
             x-on:keydown.escape="open = false"
             placeholder="{{ $placeholder }}"
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 block w-full {{ $inputClass }} {{ $name && $errors->has($name) ? 'border-red-500' : '' }}"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 {{ $inputClass }} {{ $name && $errors->has($name) ? 'border-red-500' : '' }}"
             {{ $disabled ? 'disabled' : '' }}
         />
         <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">

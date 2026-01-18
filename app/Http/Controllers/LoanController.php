@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use Throwable;
 use App\Models\Loan;
+use App\DTOs\LoanData;
 use App\Enums\LoanStatus;
 use Illuminate\Http\Request;
 use App\Services\LoanService;
+use App\Exceptions\LoanException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
-use App\Http\Requests\StoreLoanRequest;
+use App\Http\Requests\Loans\StoreLoanRequest;
+use App\Http\Requests\Loans\UpdateLoanRequest;
 use Illuminate\Support\Facades\Storage;
 
 class LoanController extends Controller
@@ -19,8 +23,7 @@ class LoanController extends Controller
 
     public function index()
     {
-        $loans = Loan::with('user', 'items')->latest()->paginate(10);
-        return view('loans.index', compact('loans'));
+        return view('loans.index');
     }
 
     public function create()
@@ -32,25 +35,26 @@ class LoanController extends Controller
     {
         try {
             $data = $request->validated();
+
+            // Prepare data for DTO
             $data['user_id'] = Auth::id();
-            $data['status'] = LoanStatus::Pending;
             $data['code'] = $this->loanService->generateTransactionCode();
 
-            $items = $data['items'];
-            unset($data['items']);
-
             if ($request->hasFile('proof_image')) {
-                $path = $request->file('proof_image')->store('loan_proofs', 'public');
-                $data['proof_image'] = $path;
+                $data['proof_image'] = $request->file('proof_image')->store('loan_proofs', 'public');
             }
 
-            $this->loanService->createLoan($data, $items);
+            $loanData = LoanData::fromArray($data);
+
+            $this->loanService->createLoan($loanData);
 
             return redirect()->route('loans.index')
                 ->with('success', 'Loan created successfully.');
-        } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Failed to create loan: ' . $e->getMessage());
+
+        } catch (LoanException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->withInput()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
         }
     }
 
@@ -64,9 +68,11 @@ class LoanController extends Controller
     {
         try {
             $this->loanService->approveLoan($loan);
-            return redirect()->route('loans.show', $loan)->with('success', 'Loan approved successfully.');
-        } catch (\Exception $e) {
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Loan approved successfully.');
+        } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', 'Approval failed: ' . $e->getMessage());
         }
     }
 
@@ -74,9 +80,11 @@ class LoanController extends Controller
     {
         try {
             $this->loanService->rejectLoan($loan);
-            return redirect()->route('loans.show', $loan)->with('success', 'Loan rejected.');
-        } catch (\Exception $e) {
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Loan rejected.');
+        } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', 'Rejection failed: ' . $e->getMessage());
         }
     }
 
@@ -84,9 +92,11 @@ class LoanController extends Controller
     {
         try {
             $this->loanService->restoreLoan($loan);
-            return redirect()->route('loans.show', $loan)->with('success', 'Loan restored to Pending.');
-        } catch (\Exception $e) {
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Loan restored to Pending.');
+        } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', 'Restore failed: ' . $e->getMessage());
         }
     }
 
@@ -98,16 +108,18 @@ class LoanController extends Controller
 
         try {
             $this->loanService->returnItems($loan, $request->input('items'));
-            return redirect()->route('loans.show', $loan)->with('success', 'Items returned successfully.');
-        } catch (\Exception $e) {
+            return redirect()->route('loans.show', ['loan' => $loan->id])->with('success', 'Items returned successfully.');
+        } catch (LoanException $e) {
             return back()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->with('error', 'Return failed: ' . $e->getMessage());
         }
     }
 
     public function edit(Loan $loan)
     {
         if ($loan->status !== LoanStatus::Pending) {
-            return redirect()->route('loans.show', $loan)
+            return redirect()->route('loans.show', ['loan' => $loan->id])
                 ->with('error', 'Only pending loans can be edited.');
         }
 
@@ -121,7 +133,7 @@ class LoanController extends Controller
         return view('loans.edit', compact('loan'));
     }
 
-    public function update(StoreLoanRequest $request, Loan $loan): RedirectResponse
+    public function update(UpdateLoanRequest $request, Loan $loan): RedirectResponse
     {
         if ($loan->status !== LoanStatus::Pending) {
             return back()->with('error', 'Only pending loans can be edited.');
@@ -129,24 +141,28 @@ class LoanController extends Controller
 
         try {
             $data = $request->validated();
-            $items = $data['items'];
-            unset($data['items']);
+            $data['user_id'] = Auth::id(); // Update the user to the editor? Or keep original requester? Usually editor logs are separate. But for simplicity.
+
+            // Keep code same
+            $data['code'] = $loan->code;
 
             if ($request->hasFile('proof_image')) {
                 if ($loan->proof_image) {
                     Storage::disk('public')->delete($loan->proof_image);
                 }
-                $path = $request->file('proof_image')->store('loan_proofs', 'public');
-                $data['proof_image'] = $path;
+                $data['proof_image'] = $request->file('proof_image')->store('loan_proofs', 'public');
             }
 
-            $this->loanService->updateLoan($loan, $data, $items);
+            $loanData = LoanData::fromArray($data);
 
-            return redirect()->route('loans.show', $loan)
+            $this->loanService->updateLoan($loan, $loanData);
+
+            return redirect()->route('loans.show', ['loan' => $loan->id])
                 ->with('success', 'Loan updated successfully.');
-        } catch (\Exception $e) {
-            return back()->withInput()
-                ->with('error', 'Failed to update loan: ' . $e->getMessage());
+        } catch (LoanException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        } catch (Throwable $e) {
+            return back()->withInput()->with('error', 'Failed to update loan: ' . $e->getMessage());
         }
     }
 }

@@ -5,7 +5,7 @@
     $action = $isEdit ? route('loans.update', $loan) : route('loans.store');
     $method = $isEdit ? 'PUT' : 'POST';
 
-    // Prepare initial data (Server Side > Old Input > Defaults)
+    // Initial Data Setup
     $initialData = [
         'borrower_name' => old('borrower_name', $loan?->borrower_name ?? ''),
         'loan_date' => old('loan_date', $loan?->loan_date?->format('Y-m-d') ?? now()->format('Y-m-d')),
@@ -23,7 +23,7 @@
                 ? ($item->asset?->product?->name ?? 'Unknown')
                 : ($item->consumableStock?->product?->name ?? 'Unknown');
 
-             // Construct Label to match SearchController: Product (Tag/Qty) (Location - Site)
+             // Construct Label: Product (Tag/Qty) (Location - Site)
             $location = $isAsset ? $item->asset?->location : $item->consumableStock?->location;
             $locName = $location?->name;
             $siteLabel = $location?->site?->getLabel();
@@ -100,6 +100,29 @@
 >
     @csrf
     @method($method)
+
+    @if ($errors->any())
+        <div class="rounded-md bg-red-50 p-4 border border-red-200 mb-6" x-init="$dispatch('toast', { message: 'Validation failed. Please check the form.', type: 'error' })">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <x-heroicon-s-x-circle class="h-5 w-5 text-red-400" />
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">
+                        There were problems with your submission:
+                    </h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <ul role="list" class="list-disc leading-tight pl-5 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Borrower -->
         <div class="space-y-4">
@@ -175,7 +198,7 @@
                     required
                 ></textarea>
             </div>
-             <div>
+            <div>
                 <x-input-label for="notes" :value="__('Notes')" />
                 <textarea
                     name="notes"
@@ -202,7 +225,7 @@
             </x-secondary-button>
         </div>
 
-        <div class="overflow-x-auto border rounded-md">
+        <div class="overflow-visible border rounded-md">
             <table class="w-full text-sm text-left">
                 <thead class="bg-muted text-muted-foreground uppercase text-xs">
                     <tr>
@@ -237,10 +260,12 @@
                                 <div class="w-full">
                                     <x-searchable-select
                                         :url="route('ajax.unified')"
-                                        x-bind:data-type="item.type"
+                                        :params="['type' => '']"
+                                        x-bind:data-params="JSON.stringify({ type: item.type })"
+                                        x-effect="$el.setAttribute('data-params', JSON.stringify({ type: item.type })); $dispatch('params-updated', { type: item.type })"
                                         placeholder="Search Asset or Consumable..."
                                         x-model="item.unified_value"
-                                        x-init="$watch('item.unified_label', v => query = v); query = item.unified_label"
+                                        x-init="$watch('item.unified_label', v => query = v); query = item.unified_label; $watch('item.type', v => params = { type: v })"
                                         input-class="h-9 w-full"
                                         @option-selected="updateItem(index, $event.detail)"
                                     />
@@ -255,7 +280,7 @@
                                     min="1"
                                     class="flex h-9 w-20 text-center rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                     :readonly="item.type === 'asset'"
-                                    :class="{'bg-gray-100 dark:bg-zinc-800': item.type === 'asset'}"
+                                    :class="{'bg-muted': item.type === 'asset'}"
                                     required
                                 />
                             </td>
@@ -303,47 +328,23 @@
             isEdit: isEdit,
 
             init() {
-                // Initialize with server data first
+                // Initialize form
                 this.form = { ...this.form, ...initialData };
 
-                // If creating, try to restore draft
-                // Check if oldInput is effectively empty
+                // Handle Draft Restoration for Create Mode
                 const hasOldInput = oldInput && Object.keys(oldInput).length > 0;
-
                 if (!this.isEdit && !hasOldInput) {
                     const draft = localStorage.getItem('loan_create_draft_v2');
                     if (draft) {
                         try {
-                            const parsed = JSON.parse(draft);
-                            // Merge draft into form
-                            this.form = { ...this.form, ...parsed };
+                            this.form = { ...this.form, ...JSON.parse(draft) };
                         } catch(e) {
-                            console.error("Failed to restore draft", e);
+                            console.error("Draft restore failed", e);
                         }
                     }
                 }
 
-                // If oldInput exists (validation error), it overrides everything
-                // But typically standard submission reloads page with 'value' attributes.
-                // However, we are using x-model. x-model overrides 'value' initial attribute!
-                // So if we have oldInput, we MUST update x-model state.
-                if (oldInput) {
-                    // Logic to map oldInput flattened array to our structure?
-                    // Actually, if we pass oldInput as initialData component props (PHP side), it's easier.
-                    // But here we rely on 'value' attributes? No, x-model ignores them.
-                    // We must manually set this.form properties if oldInput is present.
-                    // Ideally, PHP's $initialData handles old() calls.
-                    // AND PHP's $initialData handles items?
-                    // "items" in old input are array.
-                    // Implementing full old-input restoration for dynamic items is hard without PHP loop.
-                    // We'll trust the PHP 'value' attributes?
-                    // NO. x-model binds to JS state.
-                    // In $initialData, we relied on $loan->items. We didn't handle old('items').
-                    // It's acceptable for now to not fully restore REJECTED dynamic items from old(),
-                    // BUT valid drafts should persist.
-                }
-
-                // Watch ENTIRE form to save draft
+                // Handle Autosave
                 this.$watch('form', (val) => {
                     if (!this.isEdit) {
                         localStorage.setItem('loan_create_draft_v2', JSON.stringify(val));
