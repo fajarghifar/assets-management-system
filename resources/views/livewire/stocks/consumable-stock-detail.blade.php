@@ -1,5 +1,5 @@
 <div>
-    <x-modal name="stock-detail-modal" :title="''" maxWidth="lg">
+    <x-modal name="consumable-stock-detail-modal" :title="''" maxWidth="lg">
         @if($stock)
             <div class="p-6">
                 <!-- Custom Header -->
@@ -88,10 +88,10 @@
 
                 <!-- Footer Actions -->
                 <div class="mt-6 flex items-center justify-end gap-x-2">
-                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'stock-detail-modal' })">
+                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'consumable-stock-detail-modal' })">
                         {{ __('Close') }}
                     </x-secondary-button>
-                    <x-primary-button type="button" x-on:click="$dispatch('close-modal', { name: 'stock-detail-modal' }); $dispatch('edit-stock', { stock: {{ $stock->id }} })">
+                    <x-primary-button type="button" x-on:click="$dispatch('close-modal', { name: 'consumable-stock-detail-modal' }); $dispatch('edit-stock', { stock: {{ $stock->id }} })">
                         <x-heroicon-o-pencil-square class="w-4 h-4 mr-2" />
                         {{ __('Edit Stock') }}
                     </x-primary-button>

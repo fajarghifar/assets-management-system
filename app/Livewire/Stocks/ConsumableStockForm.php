@@ -2,20 +2,21 @@
 
 namespace App\Livewire\Stocks;
 
-use App\Models\Product;
 use Livewire\Component;
-use App\Models\Location;
-use App\Enums\ProductType;
 use Livewire\Attributes\On;
-use App\Models\ConsumableStock;
 use Livewire\Attributes\Locked;
+use Illuminate\Validation\Rule;
+use App\Models\ConsumableStock;
+use App\DTOs\ConsumableStockData;
 use App\Services\ConsumableStockService;
+use App\Exceptions\ConsumableStockException;
 
-class StockForm extends Component
+class ConsumableStockForm extends Component
 {
     #[Locked]
     public ?int $stockId = null;
 
+    // Form Fields
     public $product_id;
     public $location_id;
     public int $quantity = 0;
@@ -37,7 +38,7 @@ class StockForm extends Component
     {
         $this->reset(['stockId', 'product_id', 'location_id', 'quantity', 'min_quantity', 'productOptions', 'locationOptions']);
         $this->isEditing = false;
-        $this->dispatch('open-modal', name: 'stock-form-modal');
+        $this->dispatch('open-modal', name: 'consumable-stock-form-modal');
     }
 
     #[On('edit-stock')]
@@ -59,13 +60,19 @@ class StockForm extends Component
         ];
 
         $this->isEditing = true;
-        $this->dispatch('open-modal', name: 'stock-form-modal');
+        $this->dispatch('open-modal', name: 'consumable-stock-form-modal');
     }
 
     public function save(ConsumableStockService $service)
     {
         $rules = [
-            'product_id' => ['required', 'exists:products,id'],
+            'product_id' => [
+                'required',
+                'exists:products,id',
+                Rule::unique('consumable_stocks', 'product_id')
+                    ->where('location_id', $this->location_id)
+                    ->ignore($this->stockId),
+            ],
             'location_id' => ['required', 'exists:locations,id'],
             'quantity' => ['required', 'integer', 'min:0'],
             'min_quantity' => ['required', 'integer', 'min:0'],
@@ -74,12 +81,12 @@ class StockForm extends Component
         $this->validate($rules);
 
         try {
-            $data = [
-                'product_id' => $this->product_id,
-                'location_id' => $this->location_id,
-                'quantity' => $this->quantity,
-                'min_quantity' => $this->min_quantity,
-            ];
+            $data = new ConsumableStockData(
+                product_id: $this->product_id,
+                location_id: $this->location_id,
+                quantity: $this->quantity,
+                min_quantity: $this->min_quantity,
+            );
 
             if ($this->isEditing) {
                 $stock = ConsumableStock::findOrFail($this->stockId);
@@ -90,17 +97,19 @@ class StockForm extends Component
                 $message = 'Stock created successfully.';
             }
 
-            $this->dispatch('close-modal', name: 'stock-form-modal');
-            $this->dispatch('pg:eventRefresh-stocks-table');
+            $this->dispatch('close-modal', name: 'consumable-stock-form-modal');
+            $this->dispatch('pg:eventRefresh-consumable-stocks-table');
             $this->dispatch('toast', message: $message, type: 'success');
 
-        } catch (\Exception $e) {
-            $this->dispatch('toast', message: 'Error: ' . $e->getMessage(), type: 'error');
+        } catch (ConsumableStockException $e) {
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'An unexpected error occurred.', type: 'error');
         }
     }
 
     public function render()
     {
-        return view('livewire.stocks.stock-form');
+        return view('livewire.stocks.consumable-stock-form');
     }
 }

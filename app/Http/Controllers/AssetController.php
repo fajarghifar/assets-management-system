@@ -3,15 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asset;
+use App\DTOs\AssetData;
 use App\Models\Product;
 use App\Models\Location;
+use Illuminate\View\View;
 use App\Enums\AssetStatus;
 use App\Services\AssetService;
+use App\Exceptions\AssetException;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\Assets\StoreAssetRequest;
 use App\Http\Requests\Assets\UpdateAssetRequest;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
-use Illuminate\Support\Facades\Storage;
 
 class AssetController extends Controller
 {
@@ -26,10 +28,9 @@ class AssetController extends Controller
 
     public function create(): View
     {
-        // Minimal data needed for dropdowns
         $products = Product::orderBy('name')->get(['id', 'name', 'code']);
         $locations = Location::orderBy('name')->get();
-        // Passing statuses for dropdown
+
         return view('assets.create', [
             'products' => $products,
             'locations' => $locations,
@@ -45,10 +46,17 @@ class AssetController extends Controller
             $data['image_path'] = $request->file('image_path')->store('assets', 'public');
         }
 
-        $asset = $this->assetService->createAsset($data);
+        try {
+            $assetData = AssetData::fromArray($data);
+            $asset = $this->assetService->createAsset($assetData);
 
-        return redirect()->route('assets.show', $asset)
-            ->with('success', 'Asset created successfully.');
+            return redirect()->route('assets.show', ['asset' => $asset->id])
+                ->with('success', 'Asset created successfully.');
+        } catch (AssetException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+        }
     }
 
     public function show(Asset $asset): View
@@ -85,10 +93,20 @@ class AssetController extends Controller
             $data['image_path'] = $request->file('image_path')->store('assets', 'public');
         }
 
-        $this->assetService->updateAsset($asset, $data);
+        $data['product_id'] = $data['product_id'] ?? $asset->product_id;
+        $data['location_id'] = $data['location_id'] ?? $asset->location_id;
 
-        return redirect()->route('assets.show', $asset)
-            ->with('success', 'Asset updated successfully.');
+        try {
+            $assetData = AssetData::fromArray($data);
+            $this->assetService->updateAsset($asset, $assetData);
+
+            return redirect()->route('assets.show', ['asset' => $asset->id])
+                ->with('success', 'Asset updated successfully.');
+        } catch (AssetException $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'An unexpected error occurred: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Asset $asset): RedirectResponse
@@ -103,6 +121,8 @@ class AssetController extends Controller
             return redirect()->route('assets.index')
                 ->with('success', 'Asset deleted successfully.');
 
+        } catch (AssetException $e) {
+            return back()->with('error', $e->getMessage());
         } catch (\Exception $e) {
             return back()->with('error', 'Cannot delete asset. It may have related history records.');
         }

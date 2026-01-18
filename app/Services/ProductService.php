@@ -2,89 +2,64 @@
 
 namespace App\Services;
 
+use App\DTOs\ProductData;
 use App\Models\Product;
+use App\Exceptions\ProductException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Exception;
+use Throwable;
 
 class ProductService
 {
     /**
      * Create a new product.
-     *
-     * @param array<string, mixed> $data
-     * @return Product
-     * @throws Exception
      */
-    public function createProduct(array $data): Product
+    public function createProduct(ProductData $data): Product
     {
         return DB::transaction(function () use ($data) {
             try {
-                $product = Product::create($data);
-
-                Log::info("Product created successfully: ID {$product->id}");
-
-                return $product;
-            } catch (Exception $e) {
-                Log::error("Failed to create product: " . $e->getMessage());
-                throw $e;
+                return Product::create($data->toArray());
+            } catch (Throwable $e) {
+                throw ProductException::createFailed($e->getMessage(), $e);
             }
         });
     }
 
     /**
      * Update an existing product.
-     *
-     * @param Product $product
-     * @param array<string, mixed> $data
-     * @return Product
-     * @throws Exception
      */
-    public function updateProduct(Product $product, array $data): Product
+    public function updateProduct(Product $product, ProductData $data): Product
     {
         return DB::transaction(function () use ($product, $data) {
             try {
-                $product->update($data);
-                $product->refresh();
-
-                Log::info("Product updated successfully: ID {$product->id}");
-
-                return $product;
-            } catch (Exception $e) {
-                Log::error("Failed to update product ID {$product->id}: " . $e->getMessage());
-                throw $e;
+                $product->update($data->toArray());
+                return $product->refresh();
+            } catch (Throwable $e) {
+                throw ProductException::updateFailed((string) $product->id, $e->getMessage(), $e);
             }
         });
     }
 
     /**
      * Delete a product.
-     *
-     * @param Product $product
-     * @return bool
-     * @throws Exception
      */
-    public function deleteProduct(Product $product): bool
+    public function deleteProduct(Product $product): void
     {
-        return DB::transaction(function () use ($product) {
+        DB::transaction(function () use ($product) {
             try {
                 if ($product->assets()->exists()) {
-                    throw new Exception("Cannot delete product because it has associated assets. Please delete the assets first.");
+                    throw ProductException::inUse("Cannot delete product '{$product->name}' because it has associated assets.");
                 }
 
                 if ($product->consumableStocks()->exists()) {
-                    throw new Exception("Cannot delete product because it has associated consumable stocks. Please delete the stocks first.");
+                    throw ProductException::inUse("Cannot delete product '{$product->name}' because it has associated consumable stocks.");
                 }
 
                 $product->delete();
-
-                Log::info("Product deleted successfully: ID {$product->id}");
-
-                return true;
-            } catch (Exception $e) {
-                Log::error("Failed to delete product ID {$product->id}: " . $e->getMessage());
+            } catch (ProductException $e) {
                 throw $e;
+            } catch (Throwable $e) {
+                throw ProductException::deletionFailed((string) $product->id, $e->getMessage(), $e);
             }
         });
     }
@@ -92,7 +67,7 @@ class ProductService
     /**
      * Get all products, ordered by newest.
      *
-     * @return Collection
+     * @return Collection<int, Product>
      */
     public function getAllProducts(): Collection
     {

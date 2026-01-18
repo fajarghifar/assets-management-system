@@ -13,10 +13,10 @@
 
     <div class="py-4">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <livewire:stocks.stocks-table />
+            <livewire:stocks.consumable-stocks-table />
         </div>
     </div>
 
-    <livewire:stocks.stock-form />
-    <livewire:stocks.stock-detail />
+    <livewire:stocks.consumable-stock-form />
+    <livewire:stocks.consumable-stock-detail />
 </x-app-layout>

@@ -6,13 +6,13 @@ use Livewire\Component;
 use App\Models\ConsumableStock;
 use Livewire\Attributes\On;
 
-class StockDetail extends Component
+class ConsumableStockDetail extends Component
 {
     public ?ConsumableStock $stock = null;
 
     public function render()
     {
-        return view('livewire.stocks.stock-detail');
+        return view('livewire.stocks.consumable-stock-detail');
     }
 
     #[On('show-stock')]

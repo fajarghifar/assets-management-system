@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Products;
 
+use App\DTOs\ProductData;
 use App\Models\Product;
 use Livewire\Component;
 use App\Models\Category;
@@ -9,6 +10,7 @@ use App\Enums\ProductType;
 use Livewire\Attributes\On;
 use Illuminate\Validation\Rule;
 use App\Services\ProductService;
+use App\Exceptions\ProductException;
 use Illuminate\Validation\Rules\Enum;
 
 class ProductForm extends Component
@@ -93,16 +95,16 @@ class ProductForm extends Component
     {
         $this->validate();
 
-        try {
-            $data = [
-                'name' => $this->name,
-                'code' => $this->code,
-                'description' => $this->description,
-                'type' => $this->type,
-                'category_id' => $this->category_id,
-                'can_be_loaned' => $this->can_be_loaned,
-            ];
+        $data = new ProductData(
+            name: $this->name,
+            code: $this->code,
+            description: $this->description,
+            type: ProductType::from($this->type),
+            category_id: $this->category_id,
+            can_be_loaned: $this->can_be_loaned,
+        );
 
+        try {
             if ($this->isEditing && $this->product) {
                 $service->updateProduct($this->product, $data);
                 $message = 'Product updated successfully.';
@@ -114,8 +116,10 @@ class ProductForm extends Component
             $this->dispatch('close-modal', name: 'product-form-modal');
             $this->dispatch('pg:eventRefresh-products-table');
             $this->dispatch('toast', message: $message, type: 'success');
-        } catch (\Exception $e) {
-            $this->addError('name', 'Error saving product: ' . $e->getMessage());
+        } catch (ProductException $e) {
+            $this->dispatch('toast', message: $e->getMessage(), type: 'error');
+        } catch (\Throwable $e) {
+            $this->dispatch('toast', message: 'An unexpected error occurred.', type: 'error');
         }
     }
 }

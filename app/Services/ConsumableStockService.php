@@ -2,110 +2,88 @@
 
 namespace App\Services;
 
+use App\DTOs\ConsumableStockData;
 use App\Models\ConsumableStock;
+use App\Exceptions\ConsumableStockException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ConsumableStockService
 {
     /**
-     * Create or restore a stock record.
-     * Checks for existing product+location combination.
-     *
-     * @param array $data
-     * @return ConsumableStock
-     * @throws \Exception
+     * Create a new stock record.
      */
-    public function createStock(array $data): ConsumableStock
+    public function createStock(ConsumableStockData $data): ConsumableStock
     {
         return DB::transaction(function () use ($data) {
             try {
-                // Check if stock already exists for this product and location
-                $existingStock = ConsumableStock::where('product_id', $data['product_id'])
-                    ->where('location_id', $data['location_id'])
-                    ->first();
+                // Biz Logic: Manual check is still good for UX before DB constraint hit,
+                // but let's rely on DB constraint + Exception handling for robustness,
+                // or keep it if we want custom message before hitting DB.
+                // Keeping manual check for specific 'duplicate' exception flow.
+                $exists = ConsumableStock::where('product_id', $data->product_id)
+                    ->where('location_id', $data->location_id)
+                    ->exists();
 
-                if ($existingStock) {
-                    throw new \Exception("Stock for this product at this location already exists. Please update the existing record.");
+                if ($exists) {
+                    throw ConsumableStockException::duplicate();
                 }
 
-                return ConsumableStock::create([
-                    'product_id' => $data['product_id'],
-                    'location_id' => $data['location_id'],
-                    'quantity' => $data['quantity'] ?? 0,
-                    'min_quantity' => $data['min_quantity'] ?? 0,
-                ]);
-
-            } catch (\Exception $e) {
-                Log::error("Failed to create consumable stock: " . $e->getMessage());
+                return ConsumableStock::create($data->toArray());
+            } catch (ConsumableStockException $e) {
                 throw $e;
+            } catch (Throwable $e) {
+                throw ConsumableStockException::createFailed($e->getMessage(), $e);
             }
         });
     }
 
     /**
      * Update an existing stock record.
-     *
-     * @param ConsumableStock $stock
-     * @param array $data
-     * @return ConsumableStock
-     * @throws \Exception
      */
-    public function updateStock(ConsumableStock $stock, array $data): ConsumableStock
+    public function updateStock(ConsumableStock $stock, ConsumableStockData $data): ConsumableStock
     {
         return DB::transaction(function () use ($stock, $data) {
             try {
-                // Prevent changing product_id or location_id to an existing combination
-                // This logic is complex in update, usually we only allow qty updates.
-                // But if user changes location, we must check uniqueness.
-                if (
-                    (isset($data['product_id']) && $data['product_id'] != $stock->product_id) ||
-                    (isset($data['location_id']) && $data['location_id'] != $stock->location_id)
-                ) {
-                    $productId = $data['product_id'] ?? $stock->product_id;
-                    $locationId = $data['location_id'] ?? $stock->location_id;
-
-                    $exists = ConsumableStock::where('product_id', $productId)
-                        ->where('location_id', $locationId)
+                // Check uniqueness only if product or location changed
+                if ($data->product_id != $stock->product_id || $data->location_id != $stock->location_id) {
+                    $exists = ConsumableStock::where('product_id', $data->product_id)
+                        ->where('location_id', $data->location_id)
                         ->where('id', '!=', $stock->id)
                         ->exists();
 
                     if ($exists) {
-                        throw new \Exception("Another stock record already exists for this product and location.");
+                        throw ConsumableStockException::duplicate();
                     }
                 }
 
-                $stock->update([
-                    'product_id' => $data['product_id'] ?? $stock->product_id,
-                    'location_id' => $data['location_id'] ?? $stock->location_id,
-                    'quantity' => $data['quantity'] ?? $stock->quantity,
-                    'min_quantity' => $data['min_quantity'] ?? $stock->min_quantity,
-                ]);
+                $stock->update($data->toArray());
 
-                return $stock->fresh();
-
-            } catch (\Exception $e) {
-                Log::error("Failed to update consumable stock: " . $e->getMessage());
+                return $stock->refresh();
+            } catch (ConsumableStockException $e) {
                 throw $e;
+            } catch (Throwable $e) {
+                throw ConsumableStockException::updateFailed((string) $stock->id, $e->getMessage(), $e);
             }
         });
     }
 
     /**
      * Delete a stock record.
-     *
-     * @param ConsumableStock $stock
-     * @return void
-     * @throws \Exception
      */
     public function deleteStock(ConsumableStock $stock): void
     {
         DB::transaction(function () use ($stock) {
             try {
+                if ($stock->quantity > 0) {
+                    throw new ConsumableStockException("Cannot delete stock with remaining quantity ({$stock->quantity}). Please adjust quantity to 0 first.", 422);
+                }
+
                 $stock->delete();
-            } catch (\Exception $e) {
-                Log::error("Failed to delete consumable stock: " . $e->getMessage());
+            } catch (ConsumableStockException $e) {
                 throw $e;
+            } catch (Throwable $e) {
+                throw ConsumableStockException::deletionFailed((string) $stock->id, $e->getMessage(), $e);
             }
         });
     }

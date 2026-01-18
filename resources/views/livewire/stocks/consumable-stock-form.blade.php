@@ -1,4 +1,4 @@
-<x-modal name="stock-form-modal" :title="''" maxWidth="2xl">
+<x-modal name="consumable-stock-form-modal" :title="''" maxWidth="2xl">
     <div class="p-6">
         <!-- Custom Header -->
         <div class="mb-6 space-y-1.5 text-center sm:text-left">
@@ -73,7 +73,7 @@
 
             <!-- Actions -->
             <div class="mt-6 flex justify-end gap-3">
-                <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'stock-form-modal' })">
+                <x-secondary-button type="button" x-on:click="$dispatch('close-modal', { name: 'consumable-stock-form-modal' })">
                     {{ __('Cancel') }}
                 </x-secondary-button>
 
