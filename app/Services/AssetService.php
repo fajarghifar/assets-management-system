@@ -20,10 +20,11 @@ class AssetService
     {
         return DB::transaction(function () use ($data) {
             try {
-                // 1. Generate Asset Tag if not present
+
+                // Generate Asset Tag if needed
                 $assetTag = $data->asset_tag ?? $this->generateAssetTag();
 
-                // 2. Create the Asset
+                // Create Asset
                 $asset = Asset::create([
                     'product_id' => $data->product_id,
                     'location_id' => $data->location_id,
@@ -35,7 +36,7 @@ class AssetService
                     'notes' => $data->notes,
                 ]);
 
-                // 3. Log Initial History
+                // Log Initial History
                 $this->logHistory(
                     asset: $asset,
                     actionType: 'checkin',
@@ -89,9 +90,7 @@ class AssetService
     {
         return DB::transaction(function () use ($asset, $data) {
             try {
-                // Lock the record to prevent race conditions during update
-                // This ensures that if two admins try to move/update at the same time,
-                // one will block until the other is done or fail if logic conflicts.
+                // Lock for concurrency
                 $asset->refresh()->lockForUpdate();
 
                 $oldStatus = $asset->status;
@@ -99,9 +98,10 @@ class AssetService
 
                 $asset->update($data->toArray());
 
+
                 // Detect changes
                 $newStatus = $asset->status;
-                $newLocationId = $asset->location_id; // DTO might have updated it
+                $newLocationId = $asset->location_id;
 
                 if ($oldStatus !== $newStatus || $oldLocationId !== $newLocationId) {
                     $actionType = 'update';
@@ -173,7 +173,7 @@ class AssetService
         do {
             $randomCode = strtoupper(\Illuminate\Support\Str::random(4));
             $dateCode = date('ymd');
-            $tag = "INV.{$randomCode}.{$dateCode}";
+            $tag = "INV.{$dateCode}.{$randomCode}";
         } while (Asset::where('asset_tag', $tag)->exists());
 
         return $tag;

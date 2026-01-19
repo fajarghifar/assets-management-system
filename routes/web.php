@@ -19,7 +19,13 @@ Route::middleware('auth')->group(function () {
     Route::view('locations', 'locations.index')->name('locations.index');
     Route::view('categories', 'categories.index')->name('categories.index');
     Route::view('products', 'products.index')->name('products.index');
+    Route::get('/products/import', [App\Http\Controllers\ProductImportController::class, 'create'])->name('products.import');
+    Route::post('/products/import', [App\Http\Controllers\ProductImportController::class, 'store'])->name('products.import.store');
     Route::view('stocks', 'stocks.index')->name('stocks.index');
+    Route::get('/stocks/import', [App\Http\Controllers\ConsumableStockImportController::class, 'create'])->name('stocks.import');
+    Route::post('/stocks/import', [App\Http\Controllers\ConsumableStockImportController::class, 'store'])->name('stocks.import.store');
+    Route::get('/assets/import', [App\Http\Controllers\AssetImportController::class, 'create'])->name('assets.import');
+    Route::post('/assets/import', [App\Http\Controllers\AssetImportController::class, 'store'])->name('assets.import.store');
     Route::resource('assets', AssetController::class);
 
     // Loan Management

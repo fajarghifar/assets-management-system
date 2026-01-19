@@ -62,6 +62,7 @@ final class ProductsTable extends PowerGridComponent
             ->add('id')
             ->add('name')
             ->add('code')
+            ->add('description')
             ->add('category_name', fn ($product) => $product->category->name)
             ->add('type_label', function ($product) {
                 $color = match ($product->type->getColor()) {
@@ -76,6 +77,9 @@ final class ProductsTable extends PowerGridComponent
                     ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-green-500 mx-auto"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>'
                     : '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 text-red-500 mx-auto"><path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>';
             })
+            // Export Fields
+            ->add('type_export', fn($product) => $product->type->getLabel())
+            ->add('loanable_export', fn($product) => $product->can_be_loaned ? 'Yes' : 'No')
             ->add('created_at');
     }
 
@@ -92,11 +96,31 @@ final class ProductsTable extends PowerGridComponent
                 ->sortable()
                 ->searchable(),
 
-            Column::make('Category', 'category_name', 'category_id'),
+            Column::make('Category', 'category_name', 'category_id')
+                ->visibleInExport(false),
 
-            Column::make('Type', 'type_label', 'type'),
+            Column::make('Type', 'type_label', 'type')
+                ->visibleInExport(false),
 
-            Column::make('Loanable', 'can_be_loaned_label'),
+            Column::make('Loanable', 'can_be_loaned_label')
+                ->visibleInExport(false),
+
+            // Export Columns
+            Column::make('Type', 'type_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Category', 'category_name', 'category_id')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Loanable', 'loanable_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Description', 'description')
+                ->hidden()
+                ->visibleInExport(true),
 
             Column::action('Action'),
         ];

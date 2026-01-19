@@ -82,6 +82,11 @@ final class ConsumableStocksTable extends PowerGridComponent
                 }
                 return '<div class="flex items-center justify-center text-green-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" class="size-5"><path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd" /></svg></div>';
             })
+            // Export Fields
+            ->add('product_code_export', fn($stock) => $stock->product->code)
+            ->add('product_name_export', fn($stock) => $stock->product->name)
+            ->add('location_code_export', fn($stock) => $stock->location->code)
+            ->add('location_name_export', fn($stock) => $stock->location->name)
             ->add('updated_at_formatted', fn ($stock) => $stock->updated_at->format('d/m/Y H:i'));
     }
 
@@ -93,13 +98,39 @@ final class ConsumableStocksTable extends PowerGridComponent
 
             Column::make('Product', 'product_name', 'product_id')
                 ->sortable()
-                ->searchable(),
+                ->searchable()
+                ->visibleInExport(false),
+
+            Column::make('Product', 'product_name', 'product_id')
+                ->sortable()
+                ->searchable()
+                ->visibleInExport(false),
+
+            // Export Columns
+
+            Column::make('Code Product', 'product_code_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Name Product', 'product_name_export')
+                ->hidden()
+                ->visibleInExport(true),
 
             Column::make('Location Site', 'location_site', 'location_id')
-                ->sortable(),
+                ->sortable()
+                ->visibleInExport(false),
+
+            Column::make('Code Location', 'location_code_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Name Location', 'location_name_export')
+                ->hidden()
+                ->visibleInExport(true),
 
             Column::make('Location Name', 'location_name', 'location_id')
-                ->sortable(),
+                ->sortable()
+                ->visibleInExport(false),
 
             Column::make('Quantity', 'quantity')
                 ->sortable(),
@@ -107,7 +138,8 @@ final class ConsumableStocksTable extends PowerGridComponent
             Column::make('Min Qty', 'min_quantity')
                 ->sortable(),
 
-            Column::make('Status', 'status_label'),
+            Column::make('Status', 'status_label')
+                ->visibleInExport(false),
 
             Column::action('Action'),
         ];

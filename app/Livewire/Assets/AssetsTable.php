@@ -91,14 +91,23 @@ final class AssetsTable extends PowerGridComponent
                     default => 'bg-gray-100 text-gray-800',
                 };
 
-                // Use Blade::render to handle dynamic component
                 return \Illuminate\Support\Facades\Blade::render(
                     '<div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ' . $colorClasses . '">
                         <x-' . $icon . ' class="w-3.5 h-3.5 mr-1" />
                         ' . $label . '
                     </div>'
                 );
-            });
+            })
+            // Export Fields
+            ->add('product_code_export', fn($asset) => $asset->product->code)
+            ->add('product_name_export', fn($asset) => $asset->product->name)
+            ->add('location_code_export', fn($asset) => $asset->location->code)
+            ->add('location_name_export', fn($asset) => $asset->location->name)
+            ->add('location_site_export', fn($asset) => $asset->location->site->getLabel())
+            ->add('serial_number')
+            ->add('status_export', fn($asset) => $asset->status->getLabel())
+            ->add('purchase_date_export', fn($asset) => $asset->purchase_date ? $asset->purchase_date->format('Y-m-d') : '-')
+            ->add('notes');
     }
 
     public function columns(): array
@@ -113,16 +122,57 @@ final class AssetsTable extends PowerGridComponent
 
             Column::make('Product', 'product_name', 'product_id')
                 ->sortable()
-                ->searchable(),
+                ->searchable()
+                ->visibleInExport(false),
 
             Column::make('Site', 'location_site', 'location_id')
-                ->sortable(),
+                ->sortable()
+                ->visibleInExport(false),
 
             Column::make('Location', 'location_name', 'location_id')
-                ->sortable(),
+                ->sortable()
+                ->visibleInExport(false),
 
             Column::make('Status', 'status_label')
-                ->sortable(),
+                ->sortable()
+                ->visibleInExport(false),
+
+            // Export Columns
+            Column::make('Code Product', 'product_code_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Name Product', 'product_name_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Code Location', 'location_code_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Name Location', 'location_name_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Site', 'location_site_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Serial Number', 'serial_number')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Status', 'status_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Purchase Date', 'purchase_date_export')
+                ->hidden()
+                ->visibleInExport(true),
+
+            Column::make('Notes', 'notes')
+                ->hidden()
+                ->visibleInExport(true),
 
             Column::action('Action'),
         ];
