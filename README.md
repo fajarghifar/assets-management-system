@@ -1,4 +1,4 @@
-# Trusmi Asset Management 🏢
+# Asset Management System 🏢
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Laravel](https://img.shields.io/badge/laravel-v12-red)
@@ -80,8 +80,8 @@ A comprehensive **Asset & Loan Management System** built with **Laravel 12** and
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/fajarghifar/project-trusmi.git
-cd project-trusmi
+git clone https://github.com/fajarghifar/asset-management-system.git
+cd asset-management-system
 ```
 
 ### 2. Install Dependencies
@@ -102,7 +102,7 @@ Open `.env` and configure your database:
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=project_trusmi
+DB_DATABASE=asset_management_system
 DB_USERNAME=root
 DB_PASSWORD=
 ```
