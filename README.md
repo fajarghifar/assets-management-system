@@ -115,11 +115,11 @@ php artisan storage:link
 
 ### 4. Database Setup & Seeding (Fast Reset)
 
-This project uses a custom composer script to migrate and seed data in the correct order.
+This project uses the standard Artisan command to migrate and seed data in the correct order.
 **Warning:** This command will wipe your database (`migrate:fresh`).
 
 ```bash
-composer run reset
+php artisan migrate:fresh --seed
 ```
 > *This script will sequentially run all seeders to populate initial data:*
 > *   **Users:** Admin
@@ -138,9 +138,9 @@ Access the application at `http://localhost:8000`.
 
 ## 🔑 Default Credentials
 
-| Role | Email | Password |
+| Role | Username | Password |
 | --- | --- | --- |
-| **Admin** | `admin@admin.com` | `password` |
+| **Admin** | `admin` | `password` |
 
 > **Note:** Please change credentials immediately after deployment.
 
