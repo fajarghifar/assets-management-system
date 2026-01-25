@@ -1,4 +1,4 @@
-<x-guest-layout>
+<x-guest-layout title="Verify Email">
     <div class="space-y-6">
         <div class="space-y-2 text-center">
              <h1 class="text-2xl font-semibold tracking-tight">Verify Email</h1>
