@@ -17,9 +17,95 @@ class AssetSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Map Item Names from "Raw Data" to Product Codes
-        $itemNameToCode = [
-            // Fixed Items
+        // Data Mapping
+        $itemNameToCode = $this->getItemMappings();
+        $locationAliasToSite = [
+            'TGS' => LocationSite::TGS,
+            'BT Store' => LocationSite::BT,
+            'JMP' => LocationSite::JMP2,
+        ];
+
+        // Fetch Dependencies
+        $products = Product::whereIn('code', array_unique($itemNameToCode))
+            ->where('type', ProductType::Asset)
+            ->get()
+            ->keyBy('code');
+
+        if ($products->isEmpty()) {
+            $this->command->error('No Asset products found. Run ProductSeeder first.');
+            return;
+        }
+
+        $allLocations = Location::all();
+        $locationLookup = $this->resolveLocations($allLocations, $locationAliasToSite);
+        $rawData = $this->getRawData();
+
+        $totalAssets = 0;
+        $now = now();
+        $dateCode = $now->format('ymd');
+
+        $this->command->info("Starting Asset Seeding...");
+
+        foreach ($rawData as $row) {
+            $itemName = trim($row['item']);
+            $productCode = $itemNameToCode[$itemName] ?? null;
+
+            if (!$productCode || !$products->has($productCode)) {
+                continue; // Skip invalid products
+            }
+
+            $location = $locationLookup[$row['location']] ?? null;
+            if (!$location) {
+                continue; // Skip invalid locations
+            }
+
+            $product = $products->get($productCode);
+            $qty = (int) $row['qty'];
+
+            for ($i = 0; $i < $qty; $i++) {
+                // Generate Unique Asset Tag
+                do {
+                    $randomCode = strtoupper(\Illuminate\Support\Str::random(4));
+                    $assetTag = "INV.{$dateCode}.{$randomCode}";
+                } while (Asset::where('asset_tag', $assetTag)->exists());
+
+                Asset::create([
+                    'product_id' => $product->id,
+                    'location_id' => $location->id,
+                    'asset_tag' => $assetTag,
+                    'status' => AssetStatus::InStock,
+                    'purchase_date' => $now->copy()->subDays(rand(1, 730)),
+                    'notes' => "Migrasi Asset (Asal: {$row['location']}, Item: $itemName)",
+                ]);
+            }
+
+            $totalAssets += $qty;
+        }
+
+        $this->command->info("🎉 ASSET SEEDER: Total Assets Created: $totalAssets");
+    }
+
+    private function resolveLocations($allLocations, $aliases): array
+    {
+        $lookup = [];
+        foreach ($aliases as $alias => $siteEnum) {
+            $siteLocations = $allLocations->where('site', $siteEnum);
+
+            // Prefer IT locations, fallback to any
+            $preferred = $siteLocations->first(
+                fn($loc) =>
+                str_contains(strtolower($loc->name), 'it') ||
+                str_contains(strtolower($loc->name), 'server')
+            );
+
+            $lookup[$alias] = $preferred ?? $siteLocations->first();
+        }
+        return $lookup;
+    }
+
+    private function getItemMappings(): array
+    {
+        return [
             'TANG POTONG' => 'TANGPT',
             'TANG LANCIP' => 'TANGLC',
             'TANG BIASA' => 'TANGBS',
@@ -28,7 +114,7 @@ class AssetSeeder extends Seeder
             'TANG BIASA KECIL' => 'TBKCL',
             'TANG CRIMPING' => 'CRIMP',
             'GUNTING BESAR' => 'GNTBS',
-            'GUNTING' => 'GNTBS', // Added alias
+            'GUNTING' => 'GNTBS',
             'GUNTING KECIL' => 'GNTKC',
             'PISAU CUTTER' => 'CUTTER',
             'KATER' => 'CUTTER',
@@ -44,7 +130,7 @@ class AssetSeeder extends Seeder
             'BLOWER' => 'BLOWER',
             'SUNTIKAN BESAR' => 'SUNTIK',
             'LAN TESTER' => 'LANTST',
-            'TESTER LAN' => 'LANTST', // Added alias
+            'TESTER LAN' => 'LANTST',
             'MULTI METER DIGITAL' => 'MULTI',
             'OPTICAL POWER METER (OPM)' => 'OPM',
             'POWER SUPPLY TESTER' => 'PSTEST',
@@ -54,8 +140,6 @@ class AssetSeeder extends Seeder
             'STB' => 'STB',
             'FANVIL' => 'IPPHON',
             'POE' => 'POE',
-
-            // Installed Items
             'HARDISK EXTERNAL' => 'HDDEXT',
             'HARDIKS WD 500GB' => 'WD500',
             'HARDIKS SEAGATE 500GB' => 'SGT500',
@@ -64,16 +148,11 @@ class AssetSeeder extends Seeder
             'SEAGATE 250GB' => 'SGT250',
             'HARDIKS LAPTOP' => 'HDDLAP',
         ];
+    }
 
-        // 2. Map Location Alias to LocationSite Enum
-        $locationAliasToSite = [
-            'TGS' => LocationSite::TGS,
-            'BT Store' => LocationSite::BT,
-            'JMP' => LocationSite::JMP2, // Assuming JMP refers to JMP2
-        ];
-
-        // 3. Raw Data to Seed
-        $rawData = [
+    private function getRawData(): array
+    {
+        return [
             ['item' => 'TANG POTONG', 'location' => 'TGS', 'qty' => 1],
             ['item' => 'TANG LANCIP', 'location' => 'TGS', 'qty' => 1],
             ['item' => 'TANG BIASA', 'location' => 'TGS', 'qty' => 1],
@@ -120,125 +199,5 @@ class AssetSeeder extends Seeder
             ['item' => 'TANG BIASA', 'location' => 'TGS', 'qty' => 1],
             ['item' => 'STB', 'location' => 'JMP', 'qty' => 1],
         ];
-
-        // --- OPTIMIZATION START ---
-
-        // 1. Prefetch Products (Type Asset Only)
-        // Ensure keys are array values of itemNameToCode to filter fetching
-        $products = Product::whereIn('code', array_unique($itemNameToCode))
-            ->where('type', ProductType::Asset)
-            ->get()
-            ->keyBy('code');
-
-        if ($products->isEmpty()) {
-            $this->command->error('No Asset products found. Run ProductSeeder first.');
-            return;
-        }
-
-        // 2. Prefetch Locations
-        $allLocations = Location::all();
-        $locationLookup = [];
-
-        foreach ($locationAliasToSite as $alias => $siteEnum) {
-            $siteLocations = $allLocations->where('site', $siteEnum);
-
-            // Logic: Prefer 'Ruang IT' or 'Gudang IT' or 'Kantor IT' if exists
-            // Otherwise fallback to first location available.
-            $preferred = $siteLocations->first(function($loc) {
-                $name = strtolower($loc->name);
-                return str_contains($name, 'it') || str_contains($name, 'server');
-            });
-
-            $fallback = $siteLocations->first();
-
-            $locationLookup[$alias] = $preferred ?? $fallback;
-        }
-
-        $totalAssets = 0;
-        $globalCounter = 1; // You might want this to be per product or global?
-        // Usually Asset Tag sequence matches total assets or per type.
-        // Example: AST-2026-TANGPT-0001
-        // Let's reset counter per product if requested, but user snippet used globalCounter++?
-        // No, user snippet: "sprintf(..., globalCounter++)" implies global unique sequence suffix.
-        // But typically the suffix is per prefix. However, following user snippet logic.
-
-        $now = now();
-        $year = $now->format('y'); // 2 digits usually, user used Y (4 digits)
-        // User format: AST-%s-%s-%04d (AST-2024-CODE-0001)
-
-        $this->command->info("Starting Asset Seeding...");
-
-        foreach ($rawData as $row) {
-            $itemName = trim($row['item']);
-
-            // Map Name to Code
-            $productCode = $itemNameToCode[$itemName] ?? null;
-
-            if (!$productCode) {
-                // Try alias mapping if direct fail (e.g. TESTER LAN covered in itemNameToCode now)
-                $this->command->warn("⚠️ SKIP: Item '$itemName' not mapped to any Product Code.");
-                continue;
-            }
-
-            // Retrieve Product
-            $product = $products->get($productCode);
-
-            if (!$product) {
-                // Could be product exists but not as Asset type
-                // $this->command->warn("⚠️ SKIP: Product '$productCode' ($itemName) not found or not Asset type.");
-                continue;
-            }
-
-            // Retrieve Location
-            $locationAlias = $row['location'];
-            $location = $locationLookup[$locationAlias] ?? null;
-            $locationId = $location?->id;
-
-            if (!$locationId) {
-                $this->command->warn("⚠️ SKIP: Location '$locationAlias' not found.");
-                continue;
-            }
-
-            $qty = (int) $row['qty'];
-
-            if ($qty <= 0) continue;
-
-            for ($i = 0; $i < $qty; $i++) {
-                // Generate Tag
-                // Format: AST-YEAR-CODE-GlobalSequence ? Or Product Sequence?
-                // User snippet: globalCounter++
-                // Let's query existing assets count? No, seeder usually starts fresh or appends.
-                // Optimally we'd track per product counter.
-                // But let's stick to user example of global counter:
-
-                // Note: If running seeder multiple times, this might collide if not checking DB.
-                // We will assume fresh seed or handle dupes (create throws error? no, we should catch unique)
-
-                // Let's use uniqid or a better logic if this is intended for production.
-                // For seeding, globalCounter is fine if we start high or assume empty DB.
-                // I will add a random offset to globalCounter to avoid collision with existing data if possible,
-                // or just increment.
-
-                $assetTag = sprintf('AST-%s-%s-%04d', $now->format('Y'), $product->code, $globalCounter++);
-
-                // Check collisions (quick check)
-                while (Asset::where('asset_tag', $assetTag)->exists()) {
-                    $assetTag = sprintf('AST-%s-%s-%04d', $now->format('Y'), $product->code, ++$globalCounter);
-                }
-
-                Asset::create([
-                    'product_id'     => $product->id,
-                    'location_id'    => $locationId,
-                    'asset_tag'      => $assetTag,
-                    'status'         => AssetStatus::InStock, // Default
-                    'purchase_date'  => $now->subDays(rand(1, 730)), // Random date within 2 years
-                    'notes'          => "Migrasi Asset (Asal: $locationAlias, Item: $itemName)",
-                ]);
-            }
-
-            $totalAssets += $qty;
-        }
-
-        $this->command->info("🎉 ASSET SEEDER: Total Aset Fisik Dibuat: $totalAssets");
     }
 }
