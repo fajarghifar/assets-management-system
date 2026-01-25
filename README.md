@@ -27,6 +27,11 @@ A comprehensive **Asset & Loan Management System** built with **Laravel 12** and
 * **Low Stock Alerts:** Dashboard indicators for items running below minimum thresholds.
 * **Auto-Deduction:** Stock is automatically deducted when included in approved loan requests.
 
+### 🧰 Asset Kits
+* **One-Click Loans:** Bundle frequently used items (e.g., "Event Kit": Camera + Tripod + Cables) into a single Kit.
+* **Smart Resolution:** Automatically finds available items from stock when a Kit is requested.
+* **Fallback Strategy:** Intelligent search for alternative locations if primary stock is insufficient.
+
 ### 📝 Loan & Approval System
 * **Hybrid Loans:** Support for mixing **Returnable Assets** (Laptops) and **Consumables** (Pens) in a single loan request.
 * **Approval Workflow:**
